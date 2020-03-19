@@ -29,6 +29,12 @@ Links:
 
 Links:
 - https://indibit.de/raspberry-pi-mit-apple-remotelirc-python-scripte-steuern/
+- https://www.mymakerstuff.de/2017/03/03/arduino-tutorial-der-infrarotsensor/
+- https://tutorials-raspberrypi.de/raspberry-pi-ir-remote-control/
+- https://www.youtube.com/watch?v=pK6Rn8hp784&feature=emb_logo
+
+Pinout:
+Data | GND | VCC
 
 ## RFID
 
@@ -41,3 +47,6 @@ Links:
 https://hobbytischlerei.de/leistungen-hobbytischlerei.php
 
 Max size is 50x25x15 cm
+
+### To buy:
+- ADC to i2c decoder
