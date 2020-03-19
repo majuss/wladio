@@ -15,6 +15,16 @@ Links:
 - Oled 3.12"
 - Controller: SSD1322
 
+| OLED Pin | Name | Function    | Pi Pin |
+|----------|------|-------------|--------|
+| 1        | GND  | Ground      | 6      |
+| 2        | VCC  | 3.3 V       | 1      |
+| 4        | D0   | Clock       | 23     |
+| 5        | D1   | MOSI        | 19     |
+| 15       | RST  | Reset       | 22     |
+| 14       | DC   | Data Common | 18     |
+| 16       | CS   | Chip Select | 24     |
+
 ## Infrared
 
 Links:
