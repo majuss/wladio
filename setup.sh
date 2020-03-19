@@ -1,5 +1,11 @@
+sudo usermod -a -G i2c,spi,gpio pi
+
+
 # Linux packages
 sudo apt install libmpv1
+
+# For luma.oled
+sudo apt install python-dev python-pip libfreetype6-dev libjpeg-dev build-essential libopenjp2-7 libtiff5
 
 # For IR
 sudo apt install lirc python-pylirc --yes
