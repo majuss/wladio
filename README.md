@@ -33,8 +33,10 @@ Links:
 - https://tutorials-raspberrypi.de/raspberry-pi-ir-remote-control/
 - https://www.youtube.com/watch?v=pK6Rn8hp784&feature=emb_logo
 
+
+VS1838B
 Pinout:
-Data | GND | VCC
+Data | GND | VCC (2.7 - 5 V)
 
 ## RFID
 
