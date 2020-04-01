@@ -3,9 +3,8 @@
 		"name": "Fritz",
 		"url": "http://rbb-fritz-live.cast.addradio.de/rbb/fritz/live/mp3/128/stream.mp3",
 		"skip_strings": [
-			"icy-title: It’s Fritz",
-			"icy-title: Fritz vom rbb",
-			"File tags:"
+			"It’s Fritz",
+			"Fritz vom rbb"
 		],
 		"replace_strings": [
 			" icy-title:",
