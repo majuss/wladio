@@ -15,11 +15,11 @@ def stream_logger(loglevel, component, message):
             message = message.replace(replace_string, "")
         print(message.lstrip())
 
-def play_stream(stream_name):
-    global current_station
-    current_station = stream_name
-    player = mpv.MPV(log_handler=stream_logger)
-    player.play(stations[stream_name]['url'])
+def play_stream(streamObj, logger):
+    player = mpv.MPV(log_handler=logger)
+    player.play(streamObj['url'])
     player.wait_for_playback()
 
-play_stream('fritz')
+    return streamObj['key']
+
+current_station = play_stream(stations['fritz'], stream_logger)
