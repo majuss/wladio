@@ -1,5 +1,6 @@
 {
 	"fritz": {
+		"key": "fritz",
 		"name": "Fritz",
 		"url": "http://rbb-fritz-live.cast.addradio.de/rbb/fritz/live/mp3/128/stream.mp3",
 		"skip_strings": [
@@ -12,12 +13,14 @@
 		]
 	},
 	"dlf": {
+		"key": "dlf",
 		"name": "Deutschlandfunk",
 		"url": "http://st01.dlf.de/dlf/01/128/mp3/stream.mp3",
 		"skip_strings": [],
 		"replace_strings": []
 	},
 	"radioeins": {
+		"key": "radioeins",
 		"name": "RadioEins",
 		"url": "http://rbb-radioeins-live.cast.addradio.de/rbb/radioeins/live/mp3/128/stream.mp3",
 		"skip_strings": [],
