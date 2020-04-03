@@ -5,7 +5,7 @@ sudo usermod -a -G i2c,spi,gpio pi
 sudo apt install libmpv1
 
 # For luma.oled
-sudo apt install python-dev python-pip libfreetype6-dev libjpeg-dev build-essential libopenjp2-7 libtiff5
+sudo apt install python-dev python3-dev python-pip libfreetype6-dev libjpeg-dev build-essential libopenjp2-7 libtiff5
 
 # For IR
 sudo apt install lirc python-pylirc --yes
@@ -21,3 +21,6 @@ python3 -m venv venv
 source venv/bin/activate
 pip install python-mpv
 pip install luma.oled
+pip install wheel
+pip install cython
+

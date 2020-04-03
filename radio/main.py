@@ -3,11 +3,16 @@ import json
 import threading
 import time
 import sys
+import lirc
+
+
+
 
 # Load stations file
 with open('stations.json') as stations_file:
     stations = json.load(stations_file)
 
+sockid = lirc.init("radio")
 player = mpv.MPV()
 player.wait_for_property('idle-active')
 
@@ -47,14 +52,46 @@ def print_tags():
             time.sleep(1)
         time.sleep(1)
 
+def infrared_handler():
+    while True:
+        codeIR = lirc.nextcode()
+        if "up" in codeIR:
+            print("UP")
+            player.volume = player.volume + 2
+        if "down" in codeIR:
+            print("DOWN")
+            player.volume = player.volume - 2
+        if "next" in codeIR:
+            print("NEXT")
+            try:
+                player.playlist_next()
+            except:
+                print("No next title")
+        if "prev" in codeIR:
+            print("PREV")
+            try:
+                player.playlist_prev()
+            except:
+                print("No prev title")
+        if "menu" in codeIR:
+            print("MENU")
+        if "play" in codeIR:
+            print("PLAY")
+            player.pause = not player.pause
+
 player.playlist_pos = 0
 player_thread = threading.Thread(target=play_stream)
 player_thread.start()
 tag_thread = threading.Thread(target=print_tags)
 tag_thread.start()
-time.sleep(5)
+infrared_thread = threading.Thread(target=infrared_handler)
+infrared_thread.start()
+player.volume = 100
 
-player.playlist_next()
+
+# time.sleep(5)
+
+# player.playlist_next()
 # time.sleep(10)
 # player.playlist_next()
 
