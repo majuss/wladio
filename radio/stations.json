@@ -23,7 +23,10 @@
 		"key": "radioeins",
 		"name": "RadioEins",
 		"url": "http://rbb-radioeins-live.cast.addradio.de/rbb/radioeins/live/mp3/128/stream.mp3",
-		"skip_strings": [],
+		"skip_strings": [
+			"radioeins vom rbb",
+			"nur für Erwachsene"
+		],
 		"replace_strings": []
 	}
 }
