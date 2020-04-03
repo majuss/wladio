@@ -30,6 +30,7 @@ Links:
 - https://www.instructables.com/id/Setup-IR-Remote-Control-Using-LIRC-for-the-Raspber/
 - https://raspberrypi.stackexchange.com/questions/81876/raspberry-pi-3-not-lirc-not-running-working
 - https://wiki.d-diot.com/system_administration/manual_installation/8_home_assistant_configuration#lirc
+- https://codingworld.io/project/infrarot-empfaenger-und-sender-am-pi
 
 VS1838B
 Pinout:

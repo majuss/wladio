@@ -4,17 +4,21 @@ import threading
 import time
 import sys
 import lirc
-
+from mfrc522 import SimpleMFRC522
 
 
 
 # Load stations file
 with open('stations.json') as stations_file:
     stations = json.load(stations_file)
+with open('music_lib.json') as music_lib_file:
+    music_lib = json.load(music_lib_file)
 
+reader = SimpleMFRC522()
 sockid = lirc.init("radio")
 player = mpv.MPV()
 player.wait_for_property('idle-active')
+playback_mode = 0 # 0 = radio, 1 = cd, 2 = bt
 
 for station in stations:
     player.playlist_append(stations[station]['url'])
@@ -79,13 +83,35 @@ def infrared_handler():
             print("PLAY")
             player.pause = not player.pause
 
+def rfid_handler():
+    try:
+        while True:
+            rfid, text = reader.read()
+            rfid = str(rfid)
+            try:
+                player.play('/home/pi/' + music_lib[rfid])
+            except:
+                print("Unknown tag")
+            time.sleep(1)
+            print(player.playlist)
+    except KeyboardInterrupt:
+        GPIO.cleanup()
+        raise
+
 player.playlist_pos = 0
+
 player_thread = threading.Thread(target=play_stream)
 player_thread.start()
+
 tag_thread = threading.Thread(target=print_tags)
 tag_thread.start()
+
 infrared_thread = threading.Thread(target=infrared_handler)
 infrared_thread.start()
+
+rfid_thread = threading.Thread(target=rfid_handler)
+rfid_thread.start()
+
 player.volume = 100
 
 
