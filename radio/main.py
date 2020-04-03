@@ -6,50 +6,56 @@ import sys
 
 # Load stations file
 with open('stations.json') as stations_file:
-  stations = json.load(stations_file)
+    stations = json.load(stations_file)
 
-current_station = ''
 player = mpv.MPV()
+player.wait_for_property('idle-active')
 
 for station in stations:
     player.playlist_append(stations[station]['url'])
 
 def play_stream():
-    # while getattr(player_thread, "signal", True):
-    player.wait_for_playback()
+    while True:
+        player.wait_for_property('core-idle', lambda x: not x)
+        player.wait_for_property('core-idle')
 
-def next_stream():
-    player.playlist_pos = 2
-    player.wait_for_playback()
+def get_current_station():
+    url = player.playlist[player.playlist_pos]['filename']
+    for station in stations:
+        if url == stations[station]['url']:
+            return station
 
-print(player.playlist)
+def get_current_station_name():
+    url = player.playlist[player.playlist_pos]['filename']
+    for station in stations:
+        if url == stations[station]['url']:
+            return stations[station]['name']
+
+def print_tags():
+    last_tag = ''
+
+    while True:
+        print(get_current_station_name())
+        while player.metadata is not None and "icy-title" in player.metadata:
+            current_station = get_current_station()
+            tag = player.metadata['icy-title']
+            if last_tag != player.metadata['icy-title'] and player.metadata['icy-title'] not in stations[current_station]['skip_strings']:
+                for replace_string in stations[current_station]['replace_strings']:
+                    tag = tag.replace(replace_string, '').lstrip()
+                print(tag)
+                last_tag = player.metadata['icy-title']
+            time.sleep(1)
+        time.sleep(1)
+
+player.playlist_pos = 0
 player_thread = threading.Thread(target=play_stream)
 player_thread.start()
-player_thread.daemon = True
-print(threading.enumerate())
-time.sleep(10)
+tag_thread = threading.Thread(target=print_tags)
+tag_thread.start()
+time.sleep(5)
 
-player_thread.join()
-player2_thread = threading.Thread(target=next_stream)
-
+player.playlist_next()
+# time.sleep(10)
 # player.playlist_next()
 
-player2_thread.start()
-print(threading.enumerate())
-print(player.playlist)
-
-# while not hasattr(player, "metadata"):
-#     time.sleep(1)
-# while not "icy-title" in player.metadata:
-#     time.sleep(1)
-
-# last_tag = ''
-# while True:
-#     tag = player.metadata['icy-title']
-
-#     if last_tag != player.metadata['icy-title'] and player.metadata['icy-title'] not in stations[current_station]['skip_strings']:
-#         for replace_string in stations[current_station]['replace_strings']:
-#             tag = tag.replace(replace_string, '').lstrip()
-#         print(tag)
-#         last_tag = player.metadata['icy-title']
-#     time.sleep(1)
+sys.exit(0)
