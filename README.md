@@ -27,11 +27,9 @@ Links:
 ## Infrared
 
 Links:
-- https://indibit.de/raspberry-pi-mit-apple-remotelirc-python-scripte-steuern/
-- https://www.mymakerstuff.de/2017/03/03/arduino-tutorial-der-infrarotsensor/
-- https://tutorials-raspberrypi.de/raspberry-pi-ir-remote-control/
-- https://www.youtube.com/watch?v=pK6Rn8hp784&feature=emb_logo
-
+- https://www.instructables.com/id/Setup-IR-Remote-Control-Using-LIRC-for-the-Raspber/
+- https://raspberrypi.stackexchange.com/questions/81876/raspberry-pi-3-not-lirc-not-running-working
+- https://wiki.d-diot.com/system_administration/manual_installation/8_home_assistant_configuration#lirc
 
 VS1838B
 Pinout:
