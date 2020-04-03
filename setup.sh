@@ -19,8 +19,4 @@ sudo modprobe lirc_rpi gpio_in_pin=17 gpio_out_pin=23
 # Python venv
 python3 -m venv venv
 source venv/bin/activate
-pip install python-mpv
-pip install luma.oled
-pip install wheel
-pip install cython
-
+pip install python-mpv luma.oled wheel cython mfrc522
