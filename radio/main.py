@@ -109,10 +109,10 @@ def restart_streaming():
     global playback_mode
 
     player.stop = True
-    for station in stations:
-        player.playlist_append(stations[station]['url'])
-    player.playlist_pos = 0
-    print(player.playlist)
+    if len(player.playlist) != 3:
+        for station in stations:
+            player.playlist_append(stations[station]['url'])
+        player.playlist_pos = 0
 
 def set_radio_mode():
     global playback_mode
