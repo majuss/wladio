@@ -36,6 +36,50 @@ VS1838B
 Pinout:
 Data | GND | VCC (2.7 - 5 V)
 
+When install of linux package `lirc` fails do: `sudo mv /etc/lirc/lirc_options.conf.dist /etc/lirc/lirc_options.conf` then install again
+
+Config database: http://lirc-remotes.sourceforge.net/remotes-table.html
+
+Add line to `/boot/config.txt`: `dtoverlay=gpio-ir,gpio_out_pin=17,gpio_in_pin=18,gpio_in_pull=up`
+
+Edit: `/etc/lirc/lirc_options.conf`
+Set Driver to `default` and device to `/dev/lirc0`
+
+`sudo nano /etc/lirc/lircrc` 
+Example lircrc mapping file for Apple A1156
+```bash
+begin
+  button = KEY_KPMINUS
+  prog = radio
+  config = down
+end
+begin
+  button = KEY_KPPLUS
+  prog = radio
+  config = up
+end
+begin
+  button = KEY_REWIND
+  prog = radio
+  config = prev
+end
+begin
+  button = KEY_FASTFORWARD
+  prog = radio
+  config = next
+end
+begin
+  button = KEY_PLAY
+  prog = radio
+  config = play
+end
+begin
+  button = KEY_MENU
+  prog = radio
+  config = menu
+end
+```
+
 ## RFID
 
 Links:

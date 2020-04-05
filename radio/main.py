@@ -2,15 +2,15 @@ import mpv
 import threading
 from time import sleep
 import sys
-# import lirc
+import lirc
 from pirc522 import RFID
 from enum import Enum
 
-import lib as lib
+import utils as utils
 
-# Load stations file
-stations, music_lib = lib.openFiles()
-
+# Load stations and music library file
+stations, music_lib = utils.openFiles()
+music_lib_path = '/home/pi/'
 
 
 class PlaybackMode(Enum):
@@ -24,11 +24,13 @@ def play_stream():
         radioPlayer.wait_for_property('core-idle', lambda x: not x)
         radioPlayer.wait_for_property('core-idle')
 
+
 def get_current_station(player, stations):
     url = player.playlist[player.playlist_pos]['filename']
     for station in stations:
         if url == stations[station]['url']:
             return station
+
 
 def get_current_station_name(player, stations):
     url = player.playlist[player.playlist_pos]['filename']
@@ -36,12 +38,13 @@ def get_current_station_name(player, stations):
         if url == stations[station]['url']:
             return stations[station]['name']
 
+
 def print_tags():
     last_tag = ''
     global playback_mode
 
     while True:
-        if  playback_mode == PlaybackMode.Radio:
+        if playback_mode == PlaybackMode.Radio:
             print(get_current_station_name(radioPlayer, stations))
             while radioPlayer.metadata is not None and "icy-title" in radioPlayer.metadata:
                 current_station = get_current_station(radioPlayer, stations)
@@ -56,14 +59,16 @@ def print_tags():
 
         if playback_mode == PlaybackMode.CD:
             try:
-                print(radioPlayer.metadata['title'] + ' - ' + radioPlayer.metadata['artist']) 
+                print(radioPlayer.metadata['title'] +
+                      ' - ' + radioPlayer.metadata['artist'])
             except:
                 print('ex')
             sleep(1)
 
+
 def infrared_handler():
     while True:
-        codeIR = '' # lirc.nextcode()
+        codeIR = lirc.nextcode()
         if "up" in codeIR:
             print("UP")
             radioPlayer.volume = radioPlayer.volume + 2
@@ -75,13 +80,13 @@ def infrared_handler():
             try:
                 radioPlayer.playlist_next()
             except:
-                print("No next title")
+                radioPlayer.playlist_pos = 0  # Skip to first position when end is reached
         if "prev" in codeIR:
             print("PREV")
             try:
                 radioPlayer.playlist_prev()
             except:
-                print("No prev title")
+                radioPlayer.playlist_pos = len(radioPlayer.playlist) - 1  # Skip to last position
         if "menu" in codeIR:
             radioPlayer.mute = not radioPlayer.mute
             print("MENU")
@@ -90,15 +95,12 @@ def infrared_handler():
             radioPlayer.pause = not radioPlayer.pause
         sleep(0.1)
 
+
 def rfid_handler():
     global playback_mode
 
     cdPlayer = mpv.MPV(loop_playlist='inf')
     cdPlayer.volume = 100
-
-
-
-
 
 
     # @cdPlayer.property_observer('eof-reached')
@@ -145,7 +147,8 @@ def rfid_handler():
 
                         radioPlayer.pause = True
 
-                        cdPlayer.play('/home/pi/wladio/voy_core_1.mp3')
+                        cdPlayer.play(music_lib_path + music_lib[rfid])
+                        print(cdPlayer.playlist)
 
                     playback_mode = PlaybackMode.CD
                     sleep(1)
@@ -157,17 +160,17 @@ def rfid_handler():
 
             if playback_mode == PlaybackMode.CD:
                 # tag was removed or track finished playing
-                if last_time_tag_detected == False:
+                if last_time_tag_detected is False:
                     cdPlayer.command('stop')
 
                     # switch back to radio
                     radioPlayer.pause = False
                     playback_mode = PlaybackMode.Radio
 
-
     except KeyboardInterrupt:
         rdr.cleanup()
         raise
+
 
 def uid_to_num(uid):
     n = 0
@@ -176,55 +179,32 @@ def uid_to_num(uid):
     return n
 
 
-
 def setup_radio(player, stations):
     player.stop = True
-    
+
     for station in stations:
         player.playlist_append(stations[station]['url'])
     player.playlist_pos = 0
 
 
+# def set_radio_mode():
+#     global playback_mode
 
+#     playback_mode = PlaybackMode.Radio
 
-def set_radio_mode():
-    global playback_mode
-    
-    playback_mode = PlaybackMode.Radio
-
-    while True:
-        sleep(2)
-        if playback_mode == PlaybackMode.Radio:
-            restart_streaming()
+#     while True:
+#         sleep(2)
+#         if playback_mode == PlaybackMode.Radio:
+#             restart_streaming()
 
 
 rdr = RFID()
-# sockid = lirc.init("radio")
+sockid = lirc.init("radio")
 radioPlayer = mpv.MPV()
 radioPlayer.volume = 100
 playback_mode = PlaybackMode.Radio
 
 setup_radio(radioPlayer, stations)
-
-
-
-# whats this???
-# set_mode_thread = threading.Thread(target=set_radio_mode)
-# set_mode_thread.start()
-
-# radioPlayer.wait_for_property('idle-active')
-
-
-# whats this???
-# player_thread = threading.Thread(target=play_stream)
-# player_thread.start()
-
-
-
-sleep(5)
-
-
-
 
 tag_thread = threading.Thread(target=print_tags)
 tag_thread.start()
@@ -234,7 +214,5 @@ infrared_thread.start()
 
 rfid_thread = threading.Thread(target=rfid_handler)
 rfid_thread.start()
-
-
 
 sys.exit(0)
