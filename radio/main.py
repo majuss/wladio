@@ -68,36 +68,32 @@ def print_tags():
 
 def infrared_handler():
     while True:
+        player = get_current_player()
         codeIR = lirc.nextcode()
         if "up" in codeIR:
-            print("UP")
-            radioPlayer.volume = radioPlayer.volume + 2
+            player.volume = player.volume + 2
         if "down" in codeIR:
-            print("DOWN")
-            radioPlayer.volume = radioPlayer.volume - 2
+            player.volume = player.volume - 2
         if "next" in codeIR:
-            print("NEXT")
             try:
-                radioPlayer.playlist_next()
+                player.playlist_next()
             except:
-                radioPlayer.playlist_pos = 0  # Skip to first position when end is reached
+                player.playlist_pos = 0  # Skip to first position when end is reached
         if "prev" in codeIR:
-            print("PREV")
             try:
-                radioPlayer.playlist_prev()
+                player.playlist_prev()
             except:
-                radioPlayer.playlist_pos = len(radioPlayer.playlist) - 1  # Skip to last position
+                player.playlist_pos = len(player.playlist) - 1  # Skip to last position
         if "menu" in codeIR:
-            radioPlayer.mute = not radioPlayer.mute
-            print("MENU")
+            player.mute = not player.mute
         if "play" in codeIR:
-            print("PLAY")
-            radioPlayer.pause = not radioPlayer.pause
+            player.pause = not player.pause
         sleep(0.1)
 
 
 def rfid_handler():
     global playback_mode
+    global cdPlayer
 
     cdPlayer = mpv.MPV(loop_playlist='inf')
     cdPlayer.volume = 100
@@ -137,7 +133,7 @@ def rfid_handler():
                 print("tag uuid")
                 print(uid)
                 if not error:
-                    rfid = str(uid_to_num(uid))
+                    rfid = str(utils.uid_to_num(uid))
 
                     last_time_tag_detected = True
 
@@ -145,7 +141,7 @@ def rfid_handler():
 
                         print('play rfid title')
 
-                        radioPlayer.pause = True
+                        radioPlayer.mute = True
 
                         cdPlayer.play(music_lib_path + music_lib[rfid])
                         print(cdPlayer.playlist)
@@ -164,20 +160,12 @@ def rfid_handler():
                     cdPlayer.command('stop')
 
                     # switch back to radio
-                    radioPlayer.pause = False
+                    radioPlayer.mute = False
                     playback_mode = PlaybackMode.Radio
 
     except KeyboardInterrupt:
         rdr.cleanup()
         raise
-
-
-def uid_to_num(uid):
-    n = 0
-    for i in range(0, 5):
-        n = n * 256 + uid[i]
-    return n
-
 
 def setup_radio(player, stations):
     player.stop = True
@@ -186,6 +174,13 @@ def setup_radio(player, stations):
         player.playlist_append(stations[station]['url'])
     player.playlist_pos = 0
 
+def get_current_player():
+    if playback_mode == playback_mode.Radio:
+        return radioPlayer
+    if playback_mode == playback_mode.CD:
+        return cdPlayer
+    if playback_mode == playback_mode.BT:
+        return btPlayer
 
 # def set_radio_mode():
 #     global playback_mode
@@ -202,6 +197,8 @@ rdr = RFID()
 sockid = lirc.init("radio")
 radioPlayer = mpv.MPV()
 radioPlayer.volume = 100
+cdPlayer = ''
+
 playback_mode = PlaybackMode.Radio
 
 setup_radio(radioPlayer, stations)
