@@ -20,7 +20,8 @@ sudo apt install -y lirc python-pylirc liblirc-dev
 # Python venv
 python3 -m venv venv
 source venv/bin/activate
-pip install python-mpv luma.oled wheel cython pi-rc522 Adafruit-DHT
+pip3 install wheel cython
+pip3 install python-mpv luma.oled pi-rc522 Adafruit-DHT adafruit-circuitpython-bme680
 
 
 sudo mv /etc/lirc/lircd.conf.dist /etc/lirc/lircd.conf
@@ -31,3 +32,36 @@ rm -rf python-lirc
 
 
 # enable spi foo in rapsberry-config see bugs.txt
+
+
+
+### Patches
+
+# In venv/lib/python3.7/site-packages/adafruit_bme680.py replace "address=0x77" with "address=0x76". The address is hardcoded for some reason...
+# In venv/lib/python3.7/site-packages/pirc522/rfid.py
+
+#    def wait_for_tag(self, timeout = 1):
+#        # enable IRQ on detect
+#        self.init()
+#        self.irq.clear()
+#        self.dev_write(0x04, 0x00)
+#        self.dev_write(0x02, 0xA0)
+#        # wait for it
+#        waiting = True
+#        waited = 0
+#        while waiting:
+#            self.dev_write(0x09, 0x26)
+#            self.dev_write(0x01, 0x0C)
+#            self.dev_write(0x0D, 0x87)
+#            waiting = not self.irq.wait(0.1)
+#
+#            waited += 0.1
+#
+#            if timeout <= waited:
+#                print("waited enough")
+#                break
+#
+#        self.irq.clear()
+#        self.init()
+
+# Add timeout
