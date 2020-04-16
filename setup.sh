@@ -20,7 +20,7 @@ sudo apt install -y lirc python-pylirc liblirc-dev
 # Python venv
 python3 -m venv venv
 source venv/bin/activate
-pip install python-mpv luma.oled wheel cython pirc522
+pip install python-mpv luma.oled wheel cython pi-rc522 Adafruit-DHT
 
 
 sudo mv /etc/lirc/lircd.conf.dist /etc/lirc/lircd.conf
