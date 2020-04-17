@@ -19,6 +19,20 @@ class PlaybackMode(Enum):
     BT = 3
 
 
+def init_sensors():
+    import board
+    import digitalio
+    from busio import I2C
+    import adafruit_bme280
+    import adafruit_bme680
+
+    i2c = I2C(board.SCL, board.SDA)
+    bme280 = adafruit_bme280.Adafruit_BME280_I2C(i2c)
+    bme680 = adafruit_bme680.Adafruit_BME680_I2C(i2c)
+    bme280.sea_level_pressure = 1013.25
+    bme680.sea_level_pressure = 1013.25
+    return bme280, bme680
+
 def play_stream():
     while True:
         radioPlayer.wait_for_property('core-idle', lambda x: not x)
@@ -37,7 +51,6 @@ def get_current_station_name(player, stations):
     for station in stations:
         if url == stations[station]['url']:
             return stations[station]['name']
-
 
 def print_tags():
     last_tag = ''
@@ -121,7 +134,6 @@ def rfid_handler():
     try:
         while True:
             sleep(1)
-            print("rfid loop")
 
             last_time_tag_detected = False
 
@@ -139,19 +151,15 @@ def rfid_handler():
 
                     if playback_mode != PlaybackMode.CD:
 
-                        print('play rfid title')
-
                         radioPlayer.mute = True
 
                         cdPlayer.play(music_lib_path + music_lib[rfid])
                         print(cdPlayer.playlist)
 
                     playback_mode = PlaybackMode.CD
-                    sleep(1)
 
             else:
                 print("error in rdr request")
-                print(error)
                 # resume radio?
 
             if playback_mode == PlaybackMode.CD:
@@ -166,6 +174,24 @@ def rfid_handler():
     except KeyboardInterrupt:
         rdr.cleanup()
         raise
+
+def sensor_handler():
+    bme280, bme680 = init_sensors()
+    while True:
+        # print("BME280: %0.1f")
+        print("\nTemperature: %0.1f C" % bme280.temperature)
+        print("Humidity: %0.1f %%" % bme280.humidity)
+        print("Pressure: %0.1f hPa" % bme280.pressure)
+        print("Altitude = %0.2f meters" % bme280.altitude)
+
+        print("\nTemperature: %0.1f C" % bme680.temperature)
+        print("Gas: %d ohm" % bme680.gas)
+        print("Humidity: %0.1f %%" % bme680.humidity)
+        print("Pressure: %0.3f hPa" % bme680.pressure)
+        print("Altitude = %0.2f meters" % bme680.altitude)
+
+        sleep(60)
+
 
 def setup_radio(player, stations):
     player.stop = True
@@ -212,4 +238,15 @@ infrared_thread.start()
 rfid_thread = threading.Thread(target=rfid_handler)
 rfid_thread.start()
 
+sensor_thread = threading.Thread(target=sensor_handler)
+sensor_thread.start()
+
 sys.exit(0)
+
+
+
+
+
+
+
+

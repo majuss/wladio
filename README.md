@@ -85,6 +85,13 @@ end
 Links:
 https://codingworld.io/project/rfid-grundlagen
 
+RST = 22
+IRQ = 18
+MISO = 21
+MOSI = 19
+SCK = 23
+SDA = 24
+
 ## Bluetooth
 
 Links:

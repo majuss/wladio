@@ -21,7 +21,7 @@ sudo apt install -y lirc python-pylirc liblirc-dev
 python3 -m venv venv
 source venv/bin/activate
 pip3 install wheel cython
-pip3 install python-mpv luma.oled pi-rc522 Adafruit-DHT adafruit-circuitpython-bme680
+pip3 install python-mpv luma.oled pi-rc522 adafruit-circuitpython-bme680 adafruit-circuitpython-bme280
 
 
 sudo mv /etc/lirc/lircd.conf.dist /etc/lirc/lircd.conf
@@ -39,6 +39,7 @@ rm -rf python-lirc
 
 # In venv/lib/python3.7/site-packages/adafruit_bme680.py replace "address=0x77" with "address=0x76". The address is hardcoded for some reason...
 # In venv/lib/python3.7/site-packages/pirc522/rfid.py
+
 
 #    def wait_for_tag(self, timeout = 1):
 #        # enable IRQ on detect
@@ -65,3 +66,7 @@ rm -rf python-lirc
 #        self.init()
 
 # Add timeout
+
+
+# In venv/lib/python3.7/site-packages/pirc522/rfid.py
+# set pinmode to BCM and change the PINs to BCM not Board Pins
