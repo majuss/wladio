@@ -2,7 +2,7 @@ sudo usermod -a -G i2c,spi,gpio pi
 
 # Linux packages
 sudo apt install -y libmpv1
-sudo apt install -y python3-venv
+sudo apt install -y python3-venv libdbus-1-dev libudev-dev libical-dev libreadline-dev bluez-tools
 
 # For luma.oled
 sudo apt install -y python-dev python3-dev python-pip libfreetype6-dev libjpeg-dev build-essential libopenjp2-7 libtiff5
@@ -21,7 +21,7 @@ sudo apt install -y lirc python-pylirc liblirc-dev
 python3 -m venv venv
 source venv/bin/activate
 pip3 install wheel cython
-pip3 install python-mpv luma.oled pi-rc522 adafruit-circuitpython-bme680 adafruit-circuitpython-bme280 adafruit-circuitpython-ads1x15
+pip3 install python-mpv luma.oled pi-rc522 adafruit-circuitpython-bme680 adafruit-circuitpython-bme280 adafruit-circuitpython-ads1x15 pyky040
 
 
 sudo mv /etc/lirc/lircd.conf.dist /etc/lirc/lircd.conf
@@ -31,9 +31,8 @@ pip3 install python-lirc/
 rm -rf python-lirc
 
 
-# enable spi foo in rapsberry-config see bugs.txt
-
-
+## Bluetooth
+# git clone https://github.com/bluez/bluez.git
 
 ### Patches
 
@@ -70,3 +69,5 @@ rm -rf python-lirc
 
 # In venv/lib/python3.7/site-packages/pirc522/rfid.py
 # set pinmode to BCM and change the PINs to BCM not Board Pins
+
+

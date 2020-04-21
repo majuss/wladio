@@ -5,6 +5,7 @@ Building a WIFI radio based on a Raspberry Pi
 ## Audio
 
 AMP is a TDA7492. It delivers 50 Watt.
+USB-Klinke Interface is: Sabrent USB Externe Soundkarte - C-Media Electronics, Inc. Audio Adapter (Unitek Y-247A)
 
 ## Display
 
@@ -33,8 +34,10 @@ Links:
 - https://codingworld.io/project/infrarot-empfaenger-und-sender-am-pi
 
 VS1838B
-Pinout:
-Data | GND | VCC (2.7 - 5 V)
+Pinout seen from front of sensor:
+|1|2|3|
+|---|---|---|
+|Data | GND | VCC (2.7 - 5 V)|
 
 When install of linux package `lirc` fails do: `sudo mv /etc/lirc/lirc_options.conf.dist /etc/lirc/lirc_options.conf` then install again
 
@@ -46,63 +49,60 @@ Edit: `/etc/lirc/lirc_options.conf`
 Set Driver to `default` and device to `/dev/lirc0`
 
 `sudo nano /etc/lirc/lircrc` 
-Example lircrc mapping file for Apple A1156
-```bash
-begin
-  button = KEY_KPMINUS
-  prog = radio
-  config = down
-end
-begin
-  button = KEY_KPPLUS
-  prog = radio
-  config = up
-end
-begin
-  button = KEY_REWIND
-  prog = radio
-  config = prev
-end
-begin
-  button = KEY_FASTFORWARD
-  prog = radio
-  config = next
-end
-begin
-  button = KEY_PLAY
-  prog = radio
-  config = play
-end
-begin
-  button = KEY_MENU
-  prog = radio
-  config = menu
-end
-```
+Example lircrc mapping for Philips AZ1565 is inside `ir` directory.
+
+## Volume knob
+
+Links:
+https://www.ebay.de/itm/Drehregler-Drehgeber-Rotary-Encoder-Arduino-KY-040-Potentiometer-Poti-Raspberry/252713917550
+https://tutorials-raspberrypi.de/raspberry-pi-ky040-drehregler-lautstaerkeregler/
+
+KY-040 digital encoder with push button. Coverered maybe by the original Sony plastic knob.
+
+The knob should control the system audio, or the player audio, if the player takes the audio from the last player, when it's active.
 
 ## RFID
 
 Links:
 https://codingworld.io/project/rfid-grundlagen
 
-RST = 22
-IRQ = 18
-MISO = 21
-MOSI = 19
-SCK = 23
-SDA = 24
+|Function|Pin|
+|---|---|
+|RST|22|
+|IRQ |18|
+|MISO| 21|
+|MOSI |19|
+|SCK |23|
+|SDA |24|
 
 ## Bluetooth
 
 Links:
 https://circuitdigest.com/microcontroller-projects/diy-raspberry-pi-bluetooth-speaker
+https://www.raspberrypi.org/forums/viewtopic.php?t=235519
+
+USB-Bluetooth interface: Sabrent Bluetooth-Adapter USB Bluetooth 4.0 - Cambridge Silicon Radio, Ltd Bluetooth Dongle (HCI mode)
+
+When Error: `Sap driver initialization failed appears`:
+
+sudo nano /etc/systemd/system/bluetooth.target.wants/bluetooth.service
+
+ExecStart=/usr/lib/bluetooth/bluetoothd --noplugin=sap
+
+sudo systemctl daemon-reload
+sudo service bluetooth restart
+
+
+## Sensors
+
+Both via I2C, outdoor Bosch BME680 on custom breakout. Indoor Bosch BME280 and standard breakout.
 
 ## Housing
 
 Links:
 https://hobbytischlerei.de/leistungen-hobbytischlerei.php
 
-Max size is 50x25x15 cm
+Final size will be 520 x 180 x 170
 
 ## Power
 
@@ -114,7 +114,7 @@ Input is Kaltgerätestecker at 230 V
 Three powerdomains are needed:
 - 12 V for the Amp
 - 5 V for Raspberry and other peripheral devices
-- 3.3 V for some peripheral devices like the screen and RFID reader 
+- 3.3 V for some peripheral devices like the screen and RFID reader, IR sensor, Weather sensors, digital encoder
 
 ## Hardware
 
@@ -122,11 +122,11 @@ Three powerdomains are needed:
 |-------------|-------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------|---|
 | Amp         | TDA7492                       | https://de.aliexpress.com/item/4000068636510.html?spm=a2g0s.9042311.0.0.4de84c4dEyjkvM                                                                                                                                                                                                                                                                                                                 | 8     |X
 | OLED        | SSD1322                       | https://de.aliexpress.com/item/32988134507.html?spm=a2g0s.9042311.0.0.4de84c4dEyjkvM                                                                                                                                                                                                                                                                                                                   | 17    |X
-| Brain       | Raspberry Pi 4 2 GB           | https://www.amazon.de/Raspberry-Basisplatine-ARM-Cortex-A72-Bluetooth-Micro-HDMI/dp/B07TD42S27                                                                                                                                                                                                                                                                                                         | 44    |
+| Brain       | Raspberry Pi 4 2 GB           | https://www.amazon.de/Raspberry-Basisplatine-ARM-Cortex-A72-Bluetooth-Micro-HDMI/dp/B07TD42S27                                                                                                                                                                                                                                                                                                         | 44    |X
 | Woofer      | GHXAMP 5 ZOLL 8OHM 90W Woofer | https://de.aliexpress.com/item/32823669204.html?spm=a2g0o.cart.0.0.40e73c00uK2yp6&mp=1                                                                                                                                                                                                                                                                                                                 | 46    |X
 | Tweeter     | GHXAMP 2 Zoll 4OHM            | https://de.aliexpress.com/item/32834511016.html?spm=a2g0o.cart.0.0.40e73c00uK2yp6&mp=1                                                                                                                                                                                                                                                                                                                 | 16    |X
 | Wood        | Leimholz Eiche                | https://www.hornbach.de/shop/Leimholzplatte-Eiche-B-C-2000x600x18-mm/8203386/artikel.html?varCat=S13937&utm_content=Baustoffe,%20Holz,%20Fenster%20&utm_medium=cpc&utm_source=bing&utm_campaign=P%20-%20Bing%20Shopping%20-%20Alle%20Bereiche&utm_term=4580153126496934&wt_mc=de.paid.sea.bing.alwayson_assortment..pla.279170410.1224855993878720.&msclkid=3f78928e590c124c863dcce135cef13a##v8203381 | 60    |
-| Crossover   | GHXAMP 2 Weg Crossover        | https://de.aliexpress.com/item/32824193299.html?spm=a2g0o.cart.0.0.40e73c00uK2yp6&mp=1                                                                                                                                                                                                                                                                                                                 | 24    |
+| Crossover   | GHXAMP 2 Weg Crossover        | https://de.aliexpress.com/item/32824193299.html?spm=a2g0o.cart.0.0.40e73c00uK2yp6&mp=1                                                                                                                                                                                                                                                                                                                 | 24    |X
 | 12 V Supply | Meanwell                      | https://www.conrad.de/de/p/mean-well-lrs-150-12-ac-dc-netzteilbaustein-geschlossen-12-5-a-150-w-12-v-dc-1439463.html                                                                                                                                                                                                                                                                                   | 23    |
 | 5 V Supply  | Meanwell                      | https://www.conrad.de/de/p/mean-well-rs-15-5-ac-dc-netzteilbaustein-geschlossen-3-a-15-w-5-v-dc-1297280.html                                                                                                                                                                                                                                                                                           | 10    |
 | SD-Card     | Sandisk Extreme Pro 128 GB    | https://www.amazon.de/SanDisk-microSDXC-Speicherkarte-SD-Adapter-A2-App-Performance/dp/B07G3H5RBT                                                                                                                                                                                                                                                                                                      | 35    |
