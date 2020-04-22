@@ -80,27 +80,33 @@ def print_tags():
 
 
 def infrared_handler():
+    lastCode = ''
     while True:
         player = get_current_player()
         codeIR = lirc.nextcode()
-        if "up" in codeIR:
-            player.volume = player.volume + 2
-        if "down" in codeIR:
-            player.volume = player.volume - 2
-        if "next" in codeIR:
-            try:
-                player.playlist_next()
-            except:
-                player.playlist_pos = 0  # Skip to first position when end is reached
-        if "prev" in codeIR:
-            try:
-                player.playlist_prev()
-            except:
-                player.playlist_pos = len(player.playlist) - 1  # Skip to last position
-        if "menu" in codeIR:
-            player.mute = not player.mute
-        if "play" in codeIR:
-            player.pause = not player.pause
+        if "up" in codeIR or "down" in codeIR or lastCode == "up" or lastCode == "down":
+            if len(codeIR) == 0:
+                codeIR.append(lastCode)
+            if "up" in codeIR:
+                player.volume = player.volume + 2
+            if "down" in codeIR:
+                player.volume = player.volume - 2
+            lastCode = codeIR[0]
+        else:
+            if "next" in codeIR:
+                try:
+                    player.playlist_next()
+                except:
+                    player.playlist_pos = 0  # Skip to first position when end is reached
+            if "prev" in codeIR:
+                try:
+                    player.playlist_prev()
+                except:
+                    player.playlist_pos = len(player.playlist) - 1  # Skip to last position
+            if "menu" in codeIR:
+                player.mute = not player.mute
+            if "play" in codeIR:
+                player.pause = not player.pause
         sleep(0.1)
 
 
@@ -109,7 +115,7 @@ def rfid_handler():
     global cdPlayer
 
     cdPlayer = mpv.MPV(loop_playlist='inf')
-    cdPlayer.volume = 100
+    cdPlayer.volume = 30
 
 
     # @cdPlayer.property_observer('eof-reached')
@@ -158,9 +164,9 @@ def rfid_handler():
 
                     playback_mode = PlaybackMode.CD
 
-            else:
-                print("error in rdr request")
-                # resume radio?
+            # else:
+            #     print("error in rdr request")
+            #     # resume radio?
 
             if playback_mode == PlaybackMode.CD:
                 # tag was removed or track finished playing
@@ -193,21 +199,8 @@ def sensor_handler():
         sleep(60)
 
 def volume_knob_handler():
-    import board
-    import busio
-    import adafruit_ads1x15.ads1015 as ADS
-    from adafruit_ads1x15.analog_in import AnalogIn
-
-
-    i2c = busio.I2C(board.SCL, board.SDA)
-    ads = ADS.ADS1015(i2c)
-    chan = AnalogIn(ads, ADS.P0)
-
-    print("{:>5}\t{:>5}".format('raw', 'v'))
-
-    while True:
-        print("{:>5}\t{:>5.3f}".format(chan.value, chan.voltage))
-        sleep(5)
+    print("Work in progress")
+    sleep(1000000)
 
 
 def setup_radio(player, stations):
@@ -237,9 +230,9 @@ def get_current_player():
 
 
 rdr = RFID()
-sockid = lirc.init("radio")
+sockid = lirc.init("radio", blocking=True)
 radioPlayer = mpv.MPV()
-radioPlayer.volume = 100
+radioPlayer.volume = 25
 cdPlayer = ''
 
 playback_mode = PlaybackMode.Radio
@@ -255,12 +248,13 @@ infrared_thread.start()
 rfid_thread = threading.Thread(target=rfid_handler)
 rfid_thread.start()
 
-sensor_thread = threading.Thread(target=sensor_handler)
-sensor_thread.start()
+# sensor_thread = threading.Thread(target=sensor_handler)
+# sensor_thread.start()
 
-volume_thread = threading.Thread(target=volume_knob_handler)
-volume_thread.start()
-
+# volume_thread = threading.Thread(target=volume_knob_handler)
+# volume_thread.start()
+sleep(2)
+print(radioPlayer.__dict__)
 sys.exit(0)
 
 
