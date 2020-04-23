@@ -93,7 +93,10 @@ def infrared_handler():
             if "up" in codeIR:
                 player.volume = player.volume + 2
             if "down" in codeIR:
-                player.volume = player.volume - 2
+                try:
+                    player.volume = player.volume - 2
+                except:
+                    print("Volume limit reached")
             lastCode = codeIR[0]
         else:
             if "next" in codeIR:
@@ -210,23 +213,16 @@ def volume_knob_switch_callback():
     player = get_current_player()
     player.mute = not player.mute
 
-last_volume = 0
+def volume_dec_callback(ka):
+    player = get_current_player()
+    player.volume = player.volume + 1
 
-def volume_knob_callback(scale_position):
-    global last_volume
+def volume_inc_callback(ka):
     player = get_current_player()
     try:
-        if scale_position > last_volume:
-            player.volume = player.volume + 1
-            last_volume = scale_position
-        else: 
-            player.volume = player.volume - 1
-            last_volume = scale_position
+        player.volume = player.volume - 1
     except:
         print("Volume limit reached")
-    # player.volume = scale_position
-    print(scale_position)
-
 
 def setup_radio(player, stations):
     player.stop = True
@@ -262,7 +258,7 @@ radioPlayer.volume = 25
 cdPlayer = ''
 
 my_encoder = pyky040.Encoder(CLK=5, DT=6, SW=13)
-my_encoder.setup(scale_min=0, scale_max=100, step=1, chg_callback=volume_knob_callback, sw_callback=volume_knob_switch_callback)
+my_encoder.setup(scale_min=0, scale_max=100, step=1, dec_callback=volume_dec_callback, inc_callback=volume_inc_callback, sw_callback=volume_knob_switch_callback)
 
 playback_mode = PlaybackMode.Radio
 

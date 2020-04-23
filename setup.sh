@@ -70,3 +70,5 @@ rm -rf python-lirc
 # In venv/lib/python3.7/site-packages/pirc522/rfid.py
 # set pinmode to BCM and change the PINs to BCM not Board Pins
 
+# In venv/lib/python3.7/site-packages/pyky040.py
+# Line 122 set interval to 100000 instead of 1000
