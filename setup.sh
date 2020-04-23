@@ -70,4 +70,3 @@ rm -rf python-lirc
 # In venv/lib/python3.7/site-packages/pirc522/rfid.py
 # set pinmode to BCM and change the PINs to BCM not Board Pins
 
-

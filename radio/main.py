@@ -1,3 +1,4 @@
+from pyky040 import pyky040
 import mpv
 import threading
 from time import sleep
@@ -33,6 +34,7 @@ def init_sensors():
     bme680.sea_level_pressure = 1013.25
     return bme280, bme680
 
+
 def play_stream():
     while True:
         radioPlayer.wait_for_property('core-idle', lambda x: not x)
@@ -51,6 +53,7 @@ def get_current_station_name(player, stations):
     for station in stations:
         if url == stations[station]['url']:
             return stations[station]['name']
+
 
 def print_tags():
     last_tag = ''
@@ -102,7 +105,8 @@ def infrared_handler():
                 try:
                     player.playlist_prev()
                 except:
-                    player.playlist_pos = len(player.playlist) - 1  # Skip to last position
+                    # Skip to last position
+                    player.playlist_pos = len(player.playlist) - 1
             if "menu" in codeIR:
                 player.mute = not player.mute
             if "play" in codeIR:
@@ -116,7 +120,6 @@ def rfid_handler():
 
     cdPlayer = mpv.MPV(loop_playlist='inf')
     cdPlayer.volume = 30
-
 
     # @cdPlayer.property_observer('eof-reached')
     # def time_observer(name, value):
@@ -181,6 +184,7 @@ def rfid_handler():
         rdr.cleanup()
         raise
 
+
 def sensor_handler():
     bme280, bme680 = init_sensors()
     while True:
@@ -198,9 +202,30 @@ def sensor_handler():
 
         sleep(60)
 
+
 def volume_knob_handler():
-    print("Work in progress")
-    sleep(1000000)
+    my_encoder.watch()
+
+def volume_knob_switch_callback():
+    player = get_current_player()
+    player.mute = not player.mute
+
+last_volume = 0
+
+def volume_knob_callback(scale_position):
+    global last_volume
+    player = get_current_player()
+    try:
+        if scale_position > last_volume:
+            player.volume = player.volume + 1
+            last_volume = scale_position
+        else: 
+            player.volume = player.volume - 1
+            last_volume = scale_position
+    except:
+        print("Volume limit reached")
+    # player.volume = scale_position
+    print(scale_position)
 
 
 def setup_radio(player, stations):
@@ -209,6 +234,7 @@ def setup_radio(player, stations):
     for station in stations:
         player.playlist_append(stations[station]['url'])
     player.playlist_pos = 0
+
 
 def get_current_player():
     if playback_mode == playback_mode.Radio:
@@ -235,6 +261,9 @@ radioPlayer = mpv.MPV()
 radioPlayer.volume = 25
 cdPlayer = ''
 
+my_encoder = pyky040.Encoder(CLK=5, DT=6, SW=13)
+my_encoder.setup(scale_min=0, scale_max=100, step=1, chg_callback=volume_knob_callback, sw_callback=volume_knob_switch_callback)
+
 playback_mode = PlaybackMode.Radio
 
 setup_radio(radioPlayer, stations)
@@ -251,16 +280,10 @@ rfid_thread.start()
 # sensor_thread = threading.Thread(target=sensor_handler)
 # sensor_thread.start()
 
-# volume_thread = threading.Thread(target=volume_knob_handler)
-# volume_thread.start()
+volume_thread = threading.Thread(target=volume_knob_handler)
+volume_thread.start()
+
 sleep(2)
-print(radioPlayer.__dict__)
+
 sys.exit(0)
-
-
-
-
-
-
-
 

@@ -61,6 +61,11 @@ KY-040 digital encoder with push button. Coverered maybe by the original Sony pl
 
 The knob should control the system audio, or the player audio, if the player takes the audio from the last player, when it's active.
 
+
+CLK = Pin 29
+DT = Pin 31
+SW = Pin 33
+
 ## RFID
 
 Links:
