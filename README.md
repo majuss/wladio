@@ -39,6 +39,8 @@ Pinout seen from front of sensor:
 |---|---|---|
 |Data | GND | VCC (2.7 - 5 V)|
 
+Data goes on GPIO18 (Board12, see /boot/config.txt)
+
 When install of linux package `lirc` fails do: `sudo mv /etc/lirc/lirc_options.conf.dist /etc/lirc/lirc_options.conf` then install again
 
 Config database: http://lirc-remotes.sourceforge.net/remotes-table.html
@@ -85,6 +87,7 @@ https://codingworld.io/project/rfid-grundlagen
 Links:
 https://circuitdigest.com/microcontroller-projects/diy-raspberry-pi-bluetooth-speaker
 https://www.raspberrypi.org/forums/viewtopic.php?t=235519
+https://www.raspberrypi.org/forums/viewtopic.php?t=164400
 
 USB-Bluetooth interface: Sabrent Bluetooth-Adapter USB Bluetooth 4.0 - Cambridge Silicon Radio, Ltd Bluetooth Dongle (HCI mode)
 
