@@ -9,6 +9,20 @@ from enum import Enum
 
 import utils as utils
 
+from luma.core.interface.serial import spi
+from luma.core.render import canvas
+from luma.oled.device import ssd1322
+
+
+display = ssd1322(spi(device=0, port=0))
+
+display_text = "foo"
+
+
+
+
+
+
 # Load stations and music library file
 stations, music_lib = utils.openFiles()
 music_lib_path = '/home/pi/'
@@ -58,6 +72,7 @@ def get_current_station_name(player, stations):
 def print_tags():
     last_tag = ''
     global playback_mode
+    global display_text
 
     while True:
         if playback_mode == PlaybackMode.Radio:
@@ -69,6 +84,7 @@ def print_tags():
                     for replace_string in stations[current_station]['replace_strings']:
                         tag = tag.replace(replace_string, '').lstrip()
                     print(tag)
+                    display_text = tag
                     last_tag = radioPlayer.metadata['icy-title']
                 sleep(1)
             sleep(1)
@@ -224,6 +240,19 @@ def volume_inc_callback(ka):
     except:
         print("Volume limit reached")
 
+def display_handler():
+    last_text = ''
+    while True:
+        if last_text is display_text:
+            pass
+            sleep(0.0333)
+        else:
+            with canvas(display) as draw:
+                draw.rectangle(display.bounding_box, outline="white", fill="black")
+                draw.text((30, 40), display_text, fill="white")
+                last_text = display_text
+
+
 def setup_radio(player, stations):
     player.stop = True
 
@@ -278,6 +307,9 @@ rfid_thread.start()
 
 volume_thread = threading.Thread(target=volume_knob_handler)
 volume_thread.start()
+
+display_thread = threading.Thread(target=display_handler)
+display_thread.start()
 
 sleep(2)
 
