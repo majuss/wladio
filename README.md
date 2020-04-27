@@ -75,12 +75,12 @@ https://codingworld.io/project/rfid-grundlagen
 
 |Function|Pin|
 |---|---|
-|RST|22|
-|IRQ |18|
+|RST|36|
+|IRQ |37|
 |MISO| 21|
 |MOSI |19|
 |SCK |23|
-|SDA |24|
+|SDA |26|
 
 ## Bluetooth
 
