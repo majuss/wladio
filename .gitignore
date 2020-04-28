@@ -3,6 +3,7 @@
 *.mp3
 *.webm
 *.m4a
+*.otf
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
