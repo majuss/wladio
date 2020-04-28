@@ -13,13 +13,14 @@ from luma.core.interface.serial import spi
 from luma.core.render import canvas
 from luma.oled.device import ssd1322
 
+from PIL import ImageFont
+helvetica78 = ImageFont.truetype("fonts/hel_new.otf",78)
+helvetica30 = ImageFont.truetype("fonts/hel_new.otf",30)
+
 
 display = ssd1322(spi(device=0, port=0))
 
-display_text = "foo"
-
-
-
+display_text = "Radio is warming up"
 
 
 
@@ -75,8 +76,9 @@ def print_tags():
     global display_text
 
     while True:
+        # print("tag loop")
         if playback_mode == PlaybackMode.Radio:
-            print(get_current_station_name(radioPlayer, stations))
+            display_text = get_current_station_name(radioPlayer, stations)
             while radioPlayer.metadata is not None and "icy-title" in radioPlayer.metadata:
                 current_station = get_current_station(radioPlayer, stations)
                 tag = radioPlayer.metadata['icy-title']
@@ -89,10 +91,13 @@ def print_tags():
                 sleep(1)
             sleep(1)
 
-        if playback_mode == PlaybackMode.CD:
+        if playback_mode is PlaybackMode.CD:
             try:
-                print(radioPlayer.metadata['title'] +
-                      ' - ' + radioPlayer.metadata['artist'])
+                print("foo")
+                player = get_current_player()
+                display_text = player.metadata['title'] + ' - ' + player.metadata['artist']
+                print(player.metadata['title'] +
+                      ' - ' + player.metadata['artist'])
             except:
                 print('ex')
             sleep(1)
@@ -100,6 +105,9 @@ def print_tags():
 
 def infrared_handler():
     lastCode = ''
+    global playback_mode
+    global display_text
+
     while True:
         player = get_current_player()
         codeIR = lirc.nextcode()
@@ -245,11 +253,13 @@ def display_handler():
     while True:
         if last_text is display_text:
             pass
-            sleep(0.0333)
+            sleep(0.0333)  # 33 ms for each frame equals 30 fps
         else:
             with canvas(display) as draw:
-                draw.rectangle(display.bounding_box, outline="white", fill="black")
-                draw.text((30, 40), display_text, fill="white")
+                # draw.rectangle(display.bounding_box, outline="white", fill="black")
+                draw.text((5, 5), display_text, fill="white", font=helvetica78)
+                draw.text((200, 5), display_text, fill="white", font=helvetica30)
+
                 last_text = display_text
 
 

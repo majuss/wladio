@@ -12,6 +12,6 @@ device = ssd1322(serial)
 
 while True:
     with canvas(device) as draw:
-        draw.rectangle(device.bounding_box, outline="white", fill="black")
-        draw.text((30, 40), "Hello World", fill="white")
+        draw.rectangle((0, 0, 64, 32), outline="white", fill="white")
+       # draw.text((30, 40), "Hello World", fill="white")
 
