@@ -14,15 +14,19 @@ from luma.core.render import canvas
 from luma.oled.device import ssd1322
 
 from PIL import ImageFont
-helvetica78 = ImageFont.truetype("fonts/hel_new.otf",78)
-helvetica30 = ImageFont.truetype("fonts/hel_new.otf",30)
+main_font = ImageFont.truetype("fonts/hel_new.otf",78)
+secondary_font = ImageFont.truetype("fonts/hel_new.otf",30)
 
 
 display = ssd1322(spi(device=0, port=0))
 
-display_text = "Radio is warming up"
+display_dict = {
+    "display_text": "Radio is warming up",
+
+}
 
 
+frames = 30
 
 # Load stations and music library file
 stations, music_lib = utils.openFiles()
@@ -73,12 +77,12 @@ def get_current_station_name(player, stations):
 def print_tags():
     last_tag = ''
     global playback_mode
-    global display_text
+    global display_dict
 
     while True:
         # print("tag loop")
         if playback_mode == PlaybackMode.Radio:
-            display_text = get_current_station_name(radioPlayer, stations)
+            display_dict['display_text'] = get_current_station_name(radioPlayer, stations)
             while radioPlayer.metadata is not None and "icy-title" in radioPlayer.metadata:
                 current_station = get_current_station(radioPlayer, stations)
                 tag = radioPlayer.metadata['icy-title']
@@ -86,27 +90,27 @@ def print_tags():
                     for replace_string in stations[current_station]['replace_strings']:
                         tag = tag.replace(replace_string, '').lstrip()
                     print(tag)
-                    display_text = tag
+                    display_dict['display_text'] = tag
                     last_tag = radioPlayer.metadata['icy-title']
-                sleep(1)
-            sleep(1)
+                sleep(4/frames)
+            sleep(4/frames)
 
         if playback_mode is PlaybackMode.CD:
             try:
                 print("foo")
                 player = get_current_player()
-                display_text = player.metadata['title'] + ' - ' + player.metadata['artist']
+                display_dict['display_text'] = player.metadata['title'] + ' - ' + player.metadata['artist']
                 print(player.metadata['title'] +
                       ' - ' + player.metadata['artist'])
             except:
                 print('ex')
-            sleep(1)
+            sleep(4/frames)
 
 
 def infrared_handler():
     lastCode = ''
     global playback_mode
-    global display_text
+    global display_dict
 
     while True:
         player = get_current_player()
@@ -115,12 +119,9 @@ def infrared_handler():
             if len(codeIR) == 0:
                 codeIR.append(lastCode)
             if "up" in codeIR:
-                player.volume = player.volume + 2
+                volume_change(2)
             if "down" in codeIR:
-                try:
-                    player.volume = player.volume - 2
-                except:
-                    print("Volume limit reached")
+                volume_change(-2)
             lastCode = codeIR[0]
         else:
             if "next" in codeIR:
@@ -135,7 +136,7 @@ def infrared_handler():
                     # Skip to last position
                     player.playlist_pos = len(player.playlist) - 1
             if "menu" in codeIR:
-                player.mute = not player.mute
+                volume_mute()
             if "play" in codeIR:
                 player.pause = not player.pause
         sleep(0.1)
@@ -234,33 +235,52 @@ def volume_knob_handler():
     my_encoder.watch()
 
 def volume_knob_switch_callback():
-    player = get_current_player()
-    player.mute = not player.mute
+    volume_mute()
 
 def volume_dec_callback(ka):
-    player = get_current_player()
-    player.volume = player.volume + 1
+    volume_change(1)
 
 def volume_inc_callback(ka):
+    volume_change(-1)
+
+def volume_change(amount):
+    global display_dict
+
     player = get_current_player()
+    display_dict['display_text'] = 'rect'
     try:
-        player.volume = player.volume - 1
+        player.volume = player.volume + amount
     except:
         print("Volume limit reached")
 
+def volume_mute():
+    player = get_current_player()
+    player.mute = not player.mute
+
 def display_handler():
     last_text = ''
+    counter = 0
     while True:
-        if last_text is display_text:
+        if last_text is display_dict['display_text']:
             pass
-            sleep(0.0333)  # 33 ms for each frame equals 30 fps
+            sleep(1/frames)  # 33 ms for each frame equals 30 fps
         else:
             with canvas(display) as draw:
-                # draw.rectangle(display.bounding_box, outline="white", fill="black")
-                draw.text((5, 5), display_text, fill="white", font=helvetica78)
-                draw.text((200, 5), display_text, fill="white", font=helvetica30)
+                # if counter == 60:
+                #     display_dict['display_text'] = last_text
+                #     counter = 0
+                if display_dict['display_text'] is not 'rect':
+                    # draw.rectangle(display.bounding_box, outline="white", fill="black")
+                    draw.text((0, 0), display_dict['display_text'], fill="white", font=main_font)
+                    draw.text((200, 5), display_dict['display_text'], fill="white", font=secondary_font)
 
-                last_text = display_text
+                    last_text = display_dict['display_text']
+                else:
+                    # print("foo")
+                    player = get_current_player()
+                    # print(player.volume * 2.54)
+                    draw.rectangle((0, 0, player.volume * 2.54, 64), outline="white", fill="white")
+                    # counter = counter + 1
 
 
 def setup_radio(player, stations):
