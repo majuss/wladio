@@ -6,19 +6,22 @@ import sys
 import lirc
 from pirc522 import RFID
 from enum import Enum
+import math
 
 import utils as utils
 
 from luma.core.interface.serial import spi
 from luma.core.render import canvas
+from luma.core.virtual import viewport
 from luma.oled.device import ssd1322
+
 
 from PIL import ImageFont
 main_font = ImageFont.truetype("fonts/hel_new.otf",78)
 secondary_font = ImageFont.truetype("fonts/hel_new.otf",30)
 
 
-display = ssd1322(spi(device=0, port=0))
+display_device = ssd1322(spi(device=0, port=0))
 
 display_dict = {
     "display_text": "Radio is warming up",
@@ -258,29 +261,57 @@ def volume_mute():
     player.mute = not player.mute
 
 def display_handler():
+    global main_font
+
     last_text = ''
     counter = 0
+
     while True:
+        font_size = 68
         if last_text is display_dict['display_text']:
             pass
             sleep(1/frames)  # 33 ms for each frame equals 30 fps
-        else:
-            with canvas(display) as draw:
-                # if counter == 60:
-                #     display_dict['display_text'] = last_text
-                #     counter = 0
-                if display_dict['display_text'] is not 'rect':
-                    # draw.rectangle(display.bounding_box, outline="white", fill="black")
-                    draw.text((0, 0), display_dict['display_text'], fill="white", font=main_font)
-                    draw.text((200, 5), display_dict['display_text'], fill="white", font=secondary_font)
 
-                    last_text = display_dict['display_text']
-                else:
-                    # print("foo")
-                    player = get_current_player()
-                    # print(player.volume * 2.54)
-                    draw.rectangle((0, 0, player.volume * 2.54, 64), outline="white", fill="white")
-                    # counter = counter + 1
+        while main_font.getsize(display_dict['display_text'])[0] > 256:
+            font_size -= 1
+            main_font = ImageFont.truetype("../radio/fonts/hel_new.otf", font_size)
+            if font_size == 25:
+                break
+
+        string_size = main_font.getsize(display_dict['display_text'])
+        ycursor = math.ceil((64 - string_size[1])/2 +1)
+        virtual = viewport(display_device, width=max(display_device.width, string_size[0]), height=display_device.height)
+
+
+        with canvas(virtual) as draw:
+            draw.text((0, ycursor), display_dict['display_text'], fill="white", font=main_font) 
+        i = 0
+        sleep(0.5)
+
+        while i < string_size[0] -  display_device.width :
+            virtual.set_position((i, 0))
+            if i == 0:
+                sleep(0.5)
+            i += 1
+            sleep(0.03333)
+
+        # else:
+        #     with canvas(display) as draw:
+        #         # if counter == 60:
+        #         #     display_dict['display_text'] = last_text
+        #         #     counter = 0
+        #         if display_dict['display_text'] is not 'rect':
+        #             # draw.rectangle(display.bounding_box, outline="white", fill="black")
+        #             draw.text((0, 0), display_dict['display_text'], fill="white", font=main_font)
+        #             draw.text((200, 5), display_dict['display_text'], fill="white", font=secondary_font)
+
+        #             last_text = display_dict['display_text']
+        #         else:
+        #             # print("foo")
+        #             player = get_current_player()
+        #             # print(player.volume * 2.54)
+        #             draw.rectangle((0, 0, player.volume * 2.54, 64), outline="white", fill="white")
+        #             # counter = counter + 1
 
 
 def setup_radio(player, stations):
