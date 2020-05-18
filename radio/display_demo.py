@@ -1,5 +1,3 @@
-import json
-
 import time, math, threading
 
 from time import sleep as t_sleep
@@ -14,29 +12,7 @@ display_device = ssd1322(spi(device=0, port=0))
 
 virtual = viewport(display_device, width=display_device.width, height=display_device.height)
 
-#########
-
-
-def openFiles():
-    with open('stations.json') as stations_file:
-        stations = json.load(stations_file)
-    with open('music_lib.json') as music_lib_file:
-        music_lib = json.load(music_lib_file)
-
-    return [stations, music_lib]
-
-def uid_to_num(uid):
-    n = 0
-    for i in range(0, 5):
-        n = n * 256 + uid[i]
-    return n
-
-
-
-
-### display stuff ###
-
-
+##################
 
 toDisplay = []
 
@@ -84,7 +60,7 @@ def add_text(text, timeout):
 
 add_text('M & M Radio', 86400 * 365 * 1000) # timeout in 100 years
 
-
+add_text('hello again whats up budies?', 20)
 
 
 def fixed_text(text, timeout = 86400 * 365 * 1000):

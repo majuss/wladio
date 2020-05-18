@@ -10,26 +10,26 @@ import math
 
 import utils as utils
 
-from luma.core.interface.serial import spi
-from luma.core.render import canvas
-from luma.core.virtual import viewport
-from luma.oled.device import ssd1322
+# from luma.core.interface.serial import spi
+# from luma.core.render import canvas
+# from luma.core.virtual import viewport
+# from luma.oled.device import ssd1322
 
 
-from PIL import ImageFont
-main_font = ImageFont.truetype("fonts/hel_new.otf",78)
-secondary_font = ImageFont.truetype("fonts/hel_new.otf",30)
+# from PIL import ImageFont
+# main_font = ImageFont.truetype("fonts/hel_new.otf",78)
+# secondary_font = ImageFont.truetype("fonts/hel_new.otf",30)
 
 
-display_device = ssd1322(spi(device=0, port=0))
+# display_device = ssd1322(spi(device=0, port=0))
 
-display_dict = {
-    "display_text": "Radio is warming up",
+# display_dict = {
+#     "display_text": "Radio is warming up",
 
-}
+# }
 
 
-frames = 30
+frames = 60
 
 # Load stations and music library file
 stations, music_lib = utils.openFiles()
@@ -80,12 +80,15 @@ def get_current_station_name(player, stations):
 def print_tags():
     last_tag = ''
     global playback_mode
-    global display_dict
+    # global display_dict
 
     while True:
         # print("tag loop")
         if playback_mode == PlaybackMode.Radio:
-            display_dict['display_text'] = get_current_station_name(radioPlayer, stations)
+            # display_dict['display_text'] = get_current_station_name(radioPlayer, stations)
+            utils.fixed_text(get_current_station_name(radioPlayer, stations))
+
+
             while radioPlayer.metadata is not None and "icy-title" in radioPlayer.metadata:
                 current_station = get_current_station(radioPlayer, stations)
                 tag = radioPlayer.metadata['icy-title']
@@ -93,7 +96,8 @@ def print_tags():
                     for replace_string in stations[current_station]['replace_strings']:
                         tag = tag.replace(replace_string, '').lstrip()
                     print(tag)
-                    display_dict['display_text'] = tag
+                    utils.fixed_text(tag)
+                    # display_dict['display_text'] = tag
                     last_tag = radioPlayer.metadata['icy-title']
                 sleep(4/frames)
             sleep(4/frames)
@@ -102,7 +106,8 @@ def print_tags():
             try:
                 print("foo")
                 player = get_current_player()
-                display_dict['display_text'] = player.metadata['title'] + ' - ' + player.metadata['artist']
+                # display_dict['display_text'] = player.metadata['title'] + ' - ' + player.metadata['artist']
+                utils.fixed_text(player.metadata['title'] + ' - ' + player.metadata['artist'])
                 print(player.metadata['title'] +
                       ' - ' + player.metadata['artist'])
             except:
@@ -113,7 +118,7 @@ def print_tags():
 def infrared_handler():
     lastCode = ''
     global playback_mode
-    global display_dict
+    # global display_dict
 
     while True:
         player = get_current_player()
@@ -247,10 +252,9 @@ def volume_inc_callback(ka):
     volume_change(-1)
 
 def volume_change(amount):
-    global display_dict
-
     player = get_current_player()
-    display_dict['display_text'] = 'rect'
+    utils.add_text('rect', 0.5)
+    # display_dict['display_text'] = 'rect'
     try:
         player.volume = player.volume + amount
     except:
@@ -292,8 +296,8 @@ def display_handler():
             virtual.set_position((i, 0))
             if i == 0:
                 sleep(0.5)
-            i += 1
-            sleep(0.03333)
+            i += 2
+            sleep(1/frames)
 
         # else:
         #     with canvas(display) as draw:
@@ -369,8 +373,8 @@ rfid_thread.start()
 volume_thread = threading.Thread(target=volume_knob_handler)
 volume_thread.start()
 
-display_thread = threading.Thread(target=display_handler)
-display_thread.start()
+# display_thread = threading.Thread(target=display_handler)
+# display_thread.start()
 
 sleep(2)
 
