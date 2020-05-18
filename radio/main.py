@@ -255,7 +255,7 @@ def volume_inc_callback(ka):
 
 def volume_change(amount):
     player = get_current_player()
-    utils.add_text('rect', 0.5)
+    utils.display_add_text('rect', 0.5)
     # display_dict['display_text'] = 'rect'
     try:
         player.volume = player.volume + amount
@@ -266,51 +266,13 @@ def volume_mute():
     player = get_current_player()
     player.mute = not player.mute
 
-def display_make_text_dict(text, timeout):
-    font_size = 68
-    font = ImageFont.truetype("fonts/hel_new.otf", font_size)
-    (width, height) = font.getsize(text)
-
-    while font.getsize(text)[0] > 256: # text longer than display?
-        font_size -= 1
-        font = ImageFont.truetype("fonts/hel_new.otf", font_size)
-        (width, height) = font.getsize(text)
-
-        if font_size == 25:
-            break
-
-    y = math.ceil((64 - height) / 2 + 1)
-
-    print('font size', font_size, 'y', y, 'for', text)
-
-    return {
-        'text': text,
-        'timeout': time.time() + timeout,
-        'x': 0,
-        'y': y,
-        'max_position':0,
-
-        # font stuff
-        'font': font,
-        'width': width,
-        'height': height,
-        'extra_size': max(width - display_device.width, 0)
-    }
-
-
-
-
-def display_add_text(text, timeout):
-    for stackElement in toDisplay: stackElement['timeout'] += timeout
-
-    toDisplay.append(
-         display_make_text_dict(text, timeout)
-    ) 
 
 def display_handler():
     while True:
         now = time.time()
 
+        while len(toDisplay) == 0:
+            sleep(0.1)
         latestItem = toDisplay[-1]
 
 
