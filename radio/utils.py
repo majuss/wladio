@@ -41,7 +41,7 @@ def uid_to_num(uid):
 toDisplay = []
 
 
-def make_text_dict(text, timeout):
+def display_make_text_dict(text, timeout):
     font_size = 68
     font = ImageFont.truetype("fonts/hel_new.otf", font_size)
     (width, height) = font.getsize(text)
@@ -51,7 +51,7 @@ def make_text_dict(text, timeout):
         font = ImageFont.truetype("fonts/hel_new.otf", font_size)
         (width, height) = font.getsize(text)
 
-        if font_size == 25:
+        if font_size == 28:
             break
 
     y = math.ceil((64 - height) / 2 + 1)
@@ -75,23 +75,23 @@ def make_text_dict(text, timeout):
 
 
 
-def add_text(text, timeout):
-    for stackElemen in toDisplay: stackElemen['timeout'] += timeout
+def display_add_text(text, timeout):
+    for stackElement in toDisplay: stackElement['timeout'] += timeout
 
     toDisplay.append(
-         make_text_dict(text, timeout)
+         display_make_text_dict(text, timeout)
     ) 
 
-add_text('M & M Radio', 86400 * 365 * 1000) # timeout in 100 years
+display_add_text('M & M Radio', 86400 * 365 * 1000) # timeout in 100 years
 
 
 
 
-def fixed_text(text, timeout = 86400 * 365 * 1000):
+def display_fixed_text(text, timeout = 86400 * 365 * 1000):
         toDisplay = []
-        add_text('M & M Radio', 86400 * 365 * 1000); # timeout in 100 years
+        display_add_text('M & M Radio', 86400 * 365 * 1000); # timeout in 100 years
 
-        add_text(text, timeout)
+        display_add_text(text, timeout)
 
 #########################################################################################
 
