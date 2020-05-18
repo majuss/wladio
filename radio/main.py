@@ -10,25 +10,6 @@ import math
 
 import utils as utils
 
-# from luma.core.interface.serial import spi
-# from luma.core.render import canvas
-# from luma.core.virtual import viewport
-# from luma.oled.device import ssd1322
-
-
-# from PIL import ImageFont
-# main_font = ImageFont.truetype("fonts/hel_new.otf",78)
-# secondary_font = ImageFont.truetype("fonts/hel_new.otf",30)
-
-
-# display_device = ssd1322(spi(device=0, port=0))
-
-# display_dict = {
-#     "display_text": "Radio is warming up",
-
-# }
-
-
 frames = 60
 
 # Load stations and music library file
@@ -86,7 +67,7 @@ def print_tags():
         # print("tag loop")
         if playback_mode == PlaybackMode.Radio:
             # display_dict['display_text'] = get_current_station_name(radioPlayer, stations)
-            utils.fixed_text(get_current_station_name(radioPlayer, stations))
+            utils.display_fixed_text(get_current_station_name(radioPlayer, stations))
 
 
             while radioPlayer.metadata is not None and "icy-title" in radioPlayer.metadata:
@@ -96,7 +77,7 @@ def print_tags():
                     for replace_string in stations[current_station]['replace_strings']:
                         tag = tag.replace(replace_string, '').lstrip()
                     print(tag)
-                    utils.fixed_text(tag)
+                    utils.display_fixed_text(tag)
                     # display_dict['display_text'] = tag
                     last_tag = radioPlayer.metadata['icy-title']
                 sleep(4/frames)
@@ -253,7 +234,7 @@ def volume_inc_callback(ka):
 
 def volume_change(amount):
     player = get_current_player()
-    utils.add_text('rect', 0.5)
+    utils.display_add_text('rect', 0.5)
     # display_dict['display_text'] = 'rect'
     try:
         player.volume = player.volume + amount
