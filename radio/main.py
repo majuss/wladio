@@ -1,19 +1,19 @@
-from pyky040 import pyky040
-import mpv
-import threading
-from time import sleep
-import sys
+import mpv, threading, sys, math, time
 import lirc
+
+from pyky040 import pyky040
+from time import sleep
 from pirc522 import RFID
 from enum import Enum
-import math
+
+from PIL import ImageFont
+from luma.core.interface.serial import spi
+from luma.core.render import canvas
+from luma.core.virtual import viewport
+from luma.oled.device import ssd1322
 
 import utils as utils
 
-# from luma.core.interface.serial import spi
-# from luma.core.render import canvas
-# from luma.core.virtual import viewport
-# from luma.oled.device import ssd1322
 
 
 # from PIL import ImageFont
@@ -21,12 +21,14 @@ import utils as utils
 # secondary_font = ImageFont.truetype("fonts/hel_new.otf",30)
 
 
-# display_device = ssd1322(spi(device=0, port=0))
+display_device = ssd1322(spi(device=0, port=0))
 
 # display_dict = {
 #     "display_text": "Radio is warming up",
 
 # }
+virtual = viewport(display_device, width=display_device.width, height=display_device.height)
+toDisplay = []
 
 
 frames = 60
@@ -264,40 +266,113 @@ def volume_mute():
     player = get_current_player()
     player.mute = not player.mute
 
+def display_make_text_dict(text, timeout):
+    font_size = 68
+    font = ImageFont.truetype("fonts/hel_new.otf", font_size)
+    (width, height) = font.getsize(text)
+
+    while font.getsize(text)[0] > 256: # text longer than display?
+        font_size -= 1
+        font = ImageFont.truetype("fonts/hel_new.otf", font_size)
+        (width, height) = font.getsize(text)
+
+        if font_size == 25:
+            break
+
+    y = math.ceil((64 - height) / 2 + 1)
+
+    print('font size', font_size, 'y', y, 'for', text)
+
+    return {
+        'text': text,
+        'timeout': time.time() + timeout,
+        'x': 0,
+        'y': y,
+        'max_position':0,
+
+        # font stuff
+        'font': font,
+        'width': width,
+        'height': height,
+        'extra_size': max(width - display_device.width, 0)
+    }
+
+
+
+
+def display_add_text(text, timeout):
+    for stackElement in toDisplay: stackElement['timeout'] += timeout
+
+    toDisplay.append(
+         display_make_text_dict(text, timeout)
+    ) 
+
 def display_handler():
-    global main_font
-
-    last_text = ''
-    counter = 0
-
     while True:
-        font_size = 68
-        if last_text is display_dict['display_text']:
-            pass
-            sleep(1/frames)  # 33 ms for each frame equals 30 fps
+        now = time.time()
 
-        while main_font.getsize(display_dict['display_text'])[0] > 256:
-            font_size -= 1
-            main_font = ImageFont.truetype("../radio/fonts/hel_new.otf", font_size)
-            if font_size == 25:
-                break
+        latestItem = toDisplay[-1]
 
-        string_size = main_font.getsize(display_dict['display_text'])
-        ycursor = math.ceil((64 - string_size[1])/2 +1)
-        virtual = viewport(display_device, width=max(display_device.width, string_size[0]), height=display_device.height)
 
+        if latestItem['timeout'] < now:
+            toDisplay.pop()
+            continue
+
+        # render text
+        # print('would print at', latestItem['x'], latestItem['y'], latestItem['text'])
 
         with canvas(virtual) as draw:
-            draw.text((0, ycursor), display_dict['display_text'], fill="white", font=main_font) 
-        i = 0
-        sleep(0.5)
+            draw.text((-latestItem['x'], latestItem['y']), latestItem['text'], fill='white', font=latestItem['font']) 
 
-        while i < string_size[0] -  display_device.width :
-            virtual.set_position((i, 0))
-            if i == 0:
-                sleep(0.5)
-            i += 2
-            sleep(1/frames)
+
+        # recalc position for next step
+        if latestItem['x'] == latestItem['extra_size']:
+            # reached end
+            sleep(0.7)
+            latestItem['x'] = 0
+
+        elif 0 != latestItem['extra_size']:
+            if 0 == latestItem['x']:
+                sleep(0.7)
+            else:
+                sleep(1/30)
+            latestItem['x'] += 1
+
+        elif 0 == latestItem['x']:
+            sleep(0.5)
+    # global main_font
+
+    # last_text = ''
+    # counter = 0
+
+    # while True:
+    #     font_size = 68
+    #     if last_text is display_dict['display_text']:
+    #         pass
+    #         sleep(1/frames)  # 33 ms for each frame equals 30 fps
+
+    #     while main_font.getsize(display_dict['display_text'])[0] > 256:
+    #         font_size -= 1
+    #         main_font = ImageFont.truetype("../radio/fonts/hel_new.otf", font_size)
+    #         if font_size == 25:
+    #             break
+
+    #     string_size = main_font.getsize(display_dict['display_text'])
+    #     ycursor = math.ceil((64 - string_size[1])/2 +1)
+    #     virtual = viewport(display_device, width=max(display_device.width, string_size[0]), height=display_device.height)
+
+
+    #     with canvas(virtual) as draw:
+    #         draw.text((0, ycursor), display_dict['display_text'], fill="white", font=main_font) 
+    #     i = 0
+    #     sleep(0.5)
+
+    #     while i < string_size[0] -  display_device.width :
+    #         virtual.set_position((i, 0))
+    #         if i == 0:
+    #             sleep(0.5)
+    #         i += 2
+    #         sleep(1/frames)
 
         # else:
         #     with canvas(display) as draw:
@@ -373,8 +448,8 @@ rfid_thread.start()
 volume_thread = threading.Thread(target=volume_knob_handler)
 volume_thread.start()
 
-# display_thread = threading.Thread(target=display_handler)
-# display_thread.start()
+display_thread = threading.Thread(target=display_handler)
+display_thread.start()
 
 sleep(2)
 
