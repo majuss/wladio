@@ -13,6 +13,7 @@ display_device = ssd1322(spi(device=0, port=0))
 virtual = viewport(display_device, width=display_device.width, height=display_device.height)
 
 toDisplay = []
+frames = 10
 
 
 def make_text_dict(text, timeout):
@@ -59,7 +60,7 @@ add_text('M & M Radio', 86400 * 365 * 1000) # timeout in 100 years
 def fixed_text(text, timeout = 86400 * 365 * 1000):
     global toDisplay
     toDisplay = []
-    add_text('M & M Radio', 86400 * 365 * 1000); # timeout in 100 years
+    # add_text('M & M Radio', 86400 * 365 * 1000); # timeout in 100 years
 
     add_text(text, timeout)
 
@@ -70,9 +71,8 @@ def display_loop():
             latestItem = toDisplay[-1]
         except Exception as e:
             print(e)
-
         if latestItem['timeout'] < now:
-            print("popped " + toDisplay)
+            print("popped " + toDisplay[-1])
             toDisplay.pop()
             continue
 
@@ -87,13 +87,14 @@ def display_loop():
         if latestItem['x'] == latestItem['extra_size']:
             # reached end
             t_sleep(0.7)
+            print("end reached")
             latestItem['x'] = 0
 
         elif 0 != latestItem['extra_size']:
             if 0 == latestItem['x']:
                 t_sleep(0.7)
             else:
-                t_sleep(1/30)
+                t_sleep(1/frames)
             latestItem['x'] += 1
 
         elif 0 == latestItem['x']:
