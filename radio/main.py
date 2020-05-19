@@ -9,6 +9,8 @@ from enum import Enum
 import math
 
 import utils as utils
+import display as display
+# import sensors as sensors
 
 frames = 60
 
@@ -21,21 +23,6 @@ class PlaybackMode(Enum):
     Radio = 1
     CD = 2
     BT = 3
-
-
-def init_sensors():
-    import board
-    import digitalio
-    from busio import I2C
-    import adafruit_bme280
-    import adafruit_bme680
-
-    i2c = I2C(board.SCL, board.SDA)
-    bme280 = adafruit_bme280.Adafruit_BME280_I2C(i2c)
-    bme680 = adafruit_bme680.Adafruit_BME680_I2C(i2c)
-    bme280.sea_level_pressure = 1013.25
-    bme680.sea_level_pressure = 1013.25
-    return bme280, bme680
 
 
 def play_stream():
@@ -67,7 +54,7 @@ def print_tags():
         # print("tag loop")
         if playback_mode == PlaybackMode.Radio:
             # display_dict['display_text'] = get_current_station_name(radioPlayer, stations)
-            utils.display_fixed_text(get_current_station_name(radioPlayer, stations))
+            display.fixed_text(get_current_station_name(radioPlayer, stations))
 
 
             while radioPlayer.metadata is not None and "icy-title" in radioPlayer.metadata:
@@ -77,7 +64,7 @@ def print_tags():
                     for replace_string in stations[current_station]['replace_strings']:
                         tag = tag.replace(replace_string, '').lstrip()
                     print(tag)
-                    utils.display_fixed_text(tag)
+                    display.fixed_text(tag)
                     # display_dict['display_text'] = tag
                     last_tag = radioPlayer.metadata['icy-title']
                 sleep(4/frames)
@@ -88,7 +75,7 @@ def print_tags():
                 print("foo")
                 player = get_current_player()
                 # display_dict['display_text'] = player.metadata['title'] + ' - ' + player.metadata['artist']
-                utils.fixed_text(player.metadata['title'] + ' - ' + player.metadata['artist'])
+                display.fixed_text(player.metadata['title'] + ' - ' + player.metadata['artist'])
                 print(player.metadata['title'] +
                       ' - ' + player.metadata['artist'])
             except:
@@ -138,25 +125,6 @@ def rfid_handler():
     cdPlayer = mpv.MPV(loop_playlist='inf')
     cdPlayer.volume = 30
 
-    # @cdPlayer.property_observer('eof-reached')
-    # def time_observer(name, value):
-    #     print('eof-reached')
-    #     print(name)
-    #     print(value)
-
-    # @cdPlayer.event_callback('end-file')
-    # def my_handler(event):
-    #     print('EVENT <<---------------')
-    #     print('end-file')
-
-    #     global playback_mode
-
-    #     cdPlayer.command('stop')
-
-    #     # switch back to radio
-    #     radioPlayer.pause = False
-    #     playback_mode = PlaybackMode.Radio
-
     try:
         while True:
             sleep(1)
@@ -201,25 +169,6 @@ def rfid_handler():
         rdr.cleanup()
         raise
 
-
-def sensor_handler():
-    bme280, bme680 = init_sensors()
-    while True:
-        # print("BME280: %0.1f")
-        print("\nTemperature: %0.1f C" % bme280.temperature)
-        print("Humidity: %0.1f %%" % bme280.humidity)
-        print("Pressure: %0.1f hPa" % bme280.pressure)
-        print("Altitude = %0.2f meters" % bme280.altitude)
-
-        print("\nTemperature: %0.1f C" % bme680.temperature)
-        print("Gas: %d ohm" % bme680.gas)
-        print("Humidity: %0.1f %%" % bme680.humidity)
-        print("Pressure: %0.3f hPa" % bme680.pressure)
-        print("Altitude = %0.2f meters" % bme680.altitude)
-
-        sleep(60)
-
-
 def volume_knob_handler():
     my_encoder.watch()
 
@@ -234,7 +183,7 @@ def volume_inc_callback(ka):
 
 def volume_change(amount):
     player = get_current_player()
-    utils.display_add_text('rect', 0.5)
+    display.add_text('rect', 0.5)
     # display_dict['display_text'] = 'rect'
     try:
         player.volume = player.volume + amount
@@ -244,60 +193,6 @@ def volume_change(amount):
 def volume_mute():
     player = get_current_player()
     player.mute = not player.mute
-
-def display_handler():
-    global main_font
-
-    last_text = ''
-    counter = 0
-
-    while True:
-        font_size = 68
-        if last_text is display_dict['display_text']:
-            pass
-            sleep(1/frames)  # 33 ms for each frame equals 30 fps
-
-        while main_font.getsize(display_dict['display_text'])[0] > 256:
-            font_size -= 1
-            main_font = ImageFont.truetype("../radio/fonts/hel_new.otf", font_size)
-            if font_size == 25:
-                break
-
-        string_size = main_font.getsize(display_dict['display_text'])
-        ycursor = math.ceil((64 - string_size[1])/2 +1)
-        virtual = viewport(display_device, width=max(display_device.width, string_size[0]), height=display_device.height)
-
-
-        with canvas(virtual) as draw:
-            draw.text((0, ycursor), display_dict['display_text'], fill="white", font=main_font) 
-        i = 0
-        sleep(0.5)
-
-        while i < string_size[0] -  display_device.width :
-            virtual.set_position((i, 0))
-            if i == 0:
-                sleep(0.5)
-            i += 2
-            sleep(1/frames)
-
-        # else:
-        #     with canvas(display) as draw:
-        #         # if counter == 60:
-        #         #     display_dict['display_text'] = last_text
-        #         #     counter = 0
-        #         if display_dict['display_text'] is not 'rect':
-        #             # draw.rectangle(display.bounding_box, outline="white", fill="black")
-        #             draw.text((0, 0), display_dict['display_text'], fill="white", font=main_font)
-        #             draw.text((200, 5), display_dict['display_text'], fill="white", font=secondary_font)
-
-        #             last_text = display_dict['display_text']
-        #         else:
-        #             # print("foo")
-        #             player = get_current_player()
-        #             # print(player.volume * 2.54)
-        #             draw.rectangle((0, 0, player.volume * 2.54, 64), outline="white", fill="white")
-        #             # counter = counter + 1
-
 
 def setup_radio(player, stations):
     player.stop = True
@@ -314,16 +209,6 @@ def get_current_player():
         return cdPlayer
     if playback_mode == playback_mode.BT:
         return btPlayer
-
-# def set_radio_mode():
-#     global playback_mode
-
-#     playback_mode = PlaybackMode.Radio
-
-#     while True:
-#         sleep(2)
-#         if playback_mode == PlaybackMode.Radio:
-#             restart_streaming()
 
 
 rdr = RFID()
@@ -348,14 +233,8 @@ infrared_thread.start()
 rfid_thread = threading.Thread(target=rfid_handler)
 rfid_thread.start()
 
-# sensor_thread = threading.Thread(target=sensor_handler)
-# sensor_thread.start()
-
 volume_thread = threading.Thread(target=volume_knob_handler)
 volume_thread.start()
-
-# display_thread = threading.Thread(target=display_handler)
-# display_thread.start()
 
 sleep(2)
 
