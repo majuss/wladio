@@ -117,6 +117,36 @@ def infrared_handler():
                 player.pause = not player.pause
         sleep(0.1)
 
+def bt_handler():
+    import dbus
+    from dbus.mainloop.glib import DBusGMainLoop
+    from gi.repository import GLib
+
+    DBusGMainLoop(set_as_default=True)
+
+    bus = dbus.SystemBus()
+
+    def device_property_changed(*args, **kwargs):
+        try:
+            if args[1]['Connected']:
+                print("BT mode engaged")
+                volume_mute()
+            else:
+                volume_mute()
+                print("bt disconnected")
+        except Exception as e: # all other bluez things
+            pass
+
+    bus.add_signal_receiver(
+        device_property_changed,
+        bus_name='org.bluez',
+        signal_name='PropertiesChanged',
+        dbus_interface='org.freedesktop.DBus.Properties',
+        path_keyword='path'
+    )
+
+    loop = GLib.MainLoop()
+    loop.run()
 
 def rfid_handler():
     global playback_mode
@@ -183,7 +213,7 @@ def volume_inc_callback(ka):
 
 def volume_change(amount):
     player = get_current_player()
-    display.add_text('rect', 0.5)
+    # display.add_text('rect', 0.5)
     # display_dict['display_text'] = 'rect'
     try:
         player.volume = player.volume + amount
@@ -214,7 +244,7 @@ def get_current_player():
 rdr = RFID()
 sockid = lirc.init("radio", blocking=True)
 radioPlayer = mpv.MPV()
-radioPlayer.volume = 25
+radioPlayer.volume = 75
 cdPlayer = ''
 
 my_encoder = pyky040.Encoder(CLK=5, DT=6, SW=13)
@@ -235,6 +265,9 @@ rfid_thread.start()
 
 volume_thread = threading.Thread(target=volume_knob_handler)
 volume_thread.start()
+
+bt_thread = threading.Thread(target=bt_handler)
+bt_thread.start()
 
 sleep(2)
 
