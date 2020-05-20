@@ -65,6 +65,7 @@ def fixed_text(text, timeout = 86400 * 365 * 1000):
     add_text(text, timeout)
 
 def display_loop():
+
     while True:
         now = time.time()
         try:
@@ -72,7 +73,7 @@ def display_loop():
         except Exception as e:
             print(e)
         if latestItem['timeout'] < now:
-            print("popped " + toDisplay[-1])
+            print("popped " + toDisplay[-1]['text'])
             toDisplay.pop()
             continue
 
