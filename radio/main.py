@@ -121,21 +121,27 @@ def bt_handler():
     import dbus
     from dbus.mainloop.glib import DBusGMainLoop
     from gi.repository import GLib
+    global playback_mode
 
     DBusGMainLoop(set_as_default=True)
 
     bus = dbus.SystemBus()
 
-    def device_property_changed(*args, **kwargs):
-        try:
-            if args[1]['Connected']:
-                print("BT mode engaged")
-                volume_mute()
-            else:
-                volume_mute()
-                print("bt disconnected")
-        except Exception as e: # all other bluez things
-            pass
+    def device_property_changed(interface, changed, invalidated, path):
+        iface = interface[interface.rfind(".") + 1:]
+        if iface == "Device1":
+            if "Connected" in changed:
+                if changed["Connected"]:
+                    playback_mode.BT
+                    volume_mute()
+                else:
+                    playback_mode.Radio
+                    volume_mute()
+        elif iface == "MediaPlayer1":
+            if "Track" in changed:
+                track = changed["track"]
+                print(changed["Track"]["Title"])
+                display.fixed_text(track["Title"] + " - " + track["Artist"] + " - " + track["Album"])
 
     bus.add_signal_receiver(
         device_property_changed,
@@ -244,7 +250,7 @@ def get_current_player():
 rdr = RFID()
 sockid = lirc.init("radio", blocking=True)
 radioPlayer = mpv.MPV()
-radioPlayer.volume = 75
+radioPlayer.volume = 25
 cdPlayer = ''
 
 my_encoder = pyky040.Encoder(CLK=5, DT=6, SW=13)
