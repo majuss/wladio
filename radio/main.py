@@ -7,10 +7,19 @@ import lirc
 from pirc522 import RFID
 from enum import Enum
 import math
+import logging
+import time
+
 
 import utils as utils
 import display as display
 # import sensors as sensors
+
+LOG_LEVEL = logging.DEBUG
+LOG_FILE = "/home/pi/log"
+LOG_FORMAT = "%(asctime)s %(levelname)s %(message)s"
+
+logging.basicConfig(filename=LOG_FILE, format=LOG_FORMAT, level=LOG_LEVEL)
 
 frames = 60
 
@@ -56,14 +65,13 @@ def print_tags():
             # display_dict['display_text'] = get_current_station_name(radioPlayer, stations)
             display.fixed_text(get_current_station_name(radioPlayer, stations))
 
-
             while radioPlayer.metadata is not None and "icy-title" in radioPlayer.metadata:
                 current_station = get_current_station(radioPlayer, stations)
                 tag = radioPlayer.metadata['icy-title']
                 if last_tag != radioPlayer.metadata['icy-title'] and radioPlayer.metadata['icy-title'] not in stations[current_station]['skip_strings']:
                     for replace_string in stations[current_station]['replace_strings']:
                         tag = tag.replace(replace_string, '').lstrip()
-                    print(tag)
+                    logging.debug("New tag is : {}".format(tag))
                     display.fixed_text(tag)
                     # display_dict['display_text'] = tag
                     last_tag = radioPlayer.metadata['icy-title']
@@ -72,14 +80,16 @@ def print_tags():
 
         if playback_mode is PlaybackMode.CD:
             try:
-                print("foo")
                 player = get_current_player()
                 # display_dict['display_text'] = player.metadata['title'] + ' - ' + player.metadata['artist']
-                display.fixed_text(player.metadata['title'] + ' - ' + player.metadata['artist'])
-                print(player.metadata['title'] +
-                      ' - ' + player.metadata['artist'])
+                display.fixed_text(
+                    player.metadata['title'] + ' - ' + player.metadata['artist'])
+                logging.debug("CD tag is : {}".format(
+                    player.metadata['title'], player.metadata['artist']))
+
             except:
-                print('ex')
+                pass
+                logging.error("Couldn't get CD tag")
             sleep(4/frames)
 
 
@@ -117,6 +127,7 @@ def infrared_handler():
                 player.pause = not player.pause
         sleep(0.1)
 
+
 def bt_handler():
     import dbus
     from dbus.mainloop.glib import DBusGMainLoop
@@ -140,8 +151,10 @@ def bt_handler():
         elif iface == "MediaPlayer1":
             if "Track" in changed:
                 track = changed["track"]
-                print(changed["Track"]["Title"])
-                display.fixed_text(track["Title"] + " - " + track["Artist"] + " - " + track["Album"])
+                logging.debug("BT track has cahnged to : {}, {}, {} detected".format(
+                    track["Title"], track["Artist"], track["Album"]))
+                display.fixed_text(
+                    track["Title"] + " - " + track["Artist"] + " - " + track["Album"])
 
     bus.add_signal_receiver(
         device_property_changed,
@@ -154,12 +167,15 @@ def bt_handler():
     loop = GLib.MainLoop()
     loop.run()
 
+
 def rfid_handler():
     global playback_mode
     global cdPlayer
 
     cdPlayer = mpv.MPV(loop_playlist='inf')
     cdPlayer.volume = 30
+
+    last_stop = 0
 
     try:
         while True:
@@ -170,21 +186,25 @@ def rfid_handler():
             rdr.wait_for_tag()
             (error, tag_type) = rdr.request()
             if not error:
-                print("Tag detected")
                 (error, uid) = rdr.anticoll()
-                print("tag uuid")
-                print(uid)
+                logging.debug("Tag with UID: {} detected".format(uid))
                 if not error:
                     rfid = str(utils.uid_to_num(uid))
-
                     last_time_tag_detected = True
 
                     if playback_mode != PlaybackMode.CD:
 
                         radioPlayer.mute = True
 
-                        cdPlayer.play(music_lib_path + music_lib[rfid])
-                        print(cdPlayer.playlist)
+                        if time.time() - last_stop > 60:
+                            cdPlayer.pause = False
+                            cdPlayer.play(music_lib_path + music_lib[rfid])
+                            logging.debug(
+                                "CD Player started fresh with playlist: {}".format(cdPlayer.playlist))
+                        else:
+                            cdPlayer.pause = False
+                            logging.debug(
+                                "CD Player resumed with old playlist: {}".format(cdPlayer.playlist))
 
                     playback_mode = PlaybackMode.CD
 
@@ -195,7 +215,8 @@ def rfid_handler():
             if playback_mode == PlaybackMode.CD:
                 # tag was removed or track finished playing
                 if last_time_tag_detected is False:
-                    cdPlayer.command('stop')
+                    cdPlayer.pause = True
+                    last_stop = int(time.time())
 
                     # switch back to radio
                     radioPlayer.mute = False
@@ -205,17 +226,22 @@ def rfid_handler():
         rdr.cleanup()
         raise
 
+
 def volume_knob_handler():
     my_encoder.watch()
+
 
 def volume_knob_switch_callback():
     volume_mute()
 
+
 def volume_dec_callback(ka):
     volume_change(1)
 
+
 def volume_inc_callback(ka):
     volume_change(-1)
+
 
 def volume_change(amount):
     player = get_current_player()
@@ -224,11 +250,14 @@ def volume_change(amount):
     try:
         player.volume = player.volume + amount
     except:
-        print("Volume limit reached")
+        pass
+        logging.debug("Volume limit reached")
+
 
 def volume_mute():
     player = get_current_player()
     player.mute = not player.mute
+
 
 def setup_radio(player, stations):
     player.stop = True
@@ -243,8 +272,8 @@ def get_current_player():
         return radioPlayer
     if playback_mode == playback_mode.CD:
         return cdPlayer
-    if playback_mode == playback_mode.BT:
-        return btPlayer
+    # if playback_mode == playback_mode.BT:
+    #     return btPlayer
 
 
 rdr = RFID()
@@ -254,7 +283,8 @@ radioPlayer.volume = 25
 cdPlayer = ''
 
 my_encoder = pyky040.Encoder(CLK=5, DT=6, SW=13)
-my_encoder.setup(scale_min=0, scale_max=100, step=1, dec_callback=volume_dec_callback, inc_callback=volume_inc_callback, sw_callback=volume_knob_switch_callback)
+my_encoder.setup(scale_min=0, scale_max=100, step=1, dec_callback=volume_dec_callback,
+                 inc_callback=volume_inc_callback, sw_callback=volume_knob_switch_callback)
 
 playback_mode = PlaybackMode.Radio
 
@@ -275,7 +305,7 @@ volume_thread.start()
 bt_thread = threading.Thread(target=bt_handler)
 bt_thread.start()
 
+logging.debug("Init done")
 sleep(2)
 
 sys.exit(0)
-
