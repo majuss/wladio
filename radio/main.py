@@ -226,6 +226,36 @@ def rfid_handler():
         rdr.cleanup()
         raise
 
+def power_state_handler():
+    import RPi.GPIO as GPIO
+    global playback_mode
+
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(12, GPIO.IN)
+
+    last_state = GPIO.input(12)
+    while True:
+        state = GPIO.input(12)
+        sleep(0.1)
+        player = get_current_player()
+
+        if state and not last_state: # turned radio on
+            if playback_mode == PlaybackMode.Radio:
+                player.playlist_pos = 0
+            if playback_mode == PlaybackMode.CD:
+                player.pause = False
+            last_state = state
+            print("player resumed")
+
+        if not state and last_state: # turned radio off
+            if playback_mode == PlaybackMode.Radio:
+                player.stop = True
+            if playback_mode == PlaybackMode.CD:
+                player.pause = True
+            display.fixed_text("standby")
+            last_state = state
+            print("player stopped")
+
 
 def volume_knob_handler():
     my_encoder.watch()
@@ -304,6 +334,9 @@ volume_thread.start()
 
 bt_thread = threading.Thread(target=bt_handler)
 bt_thread.start()
+
+power_state_thread = threading.Thread(target=power_state_handler)
+power_state_thread.start()
 
 logging.debug("Init done")
 sleep(2)
