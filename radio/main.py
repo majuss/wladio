@@ -9,6 +9,7 @@ from enum import Enum
 import math
 import logging
 import time
+import subprocess
 
 
 import utils as utils
@@ -150,11 +151,11 @@ def bt_handler():
                     volume_mute()
         elif iface == "MediaPlayer1":
             if "Track" in changed:
-                track = changed["track"]
+                track = changed['Track']
                 logging.debug("BT track has cahnged to : {}, {}, {} detected".format(
-                    track["Title"], track["Artist"], track["Album"]))
+                    track['Title'], track['Artist'], track['Album']))
                 display.fixed_text(
-                    track["Title"] + " - " + track["Artist"] + " - " + track["Album"])
+                    track['Title'] + ' - ' + track['Artist'] + ' - ' + track['Album'])
 
     bus.add_signal_receiver(
         device_property_changed,
@@ -245,6 +246,7 @@ def power_state_handler():
             if playback_mode == PlaybackMode.CD:
                 player.pause = False
             last_state = state
+            subprocess.call(["rfkill", "unblock", "bluetooth"])
             print("player resumed")
 
         if not state and last_state: # turned radio off
@@ -254,6 +256,7 @@ def power_state_handler():
                 player.pause = True
             display.fixed_text("standby")
             last_state = state
+            subprocess.call(["rfkill", "block", "bluetooth"])
             print("player stopped")
 
 
