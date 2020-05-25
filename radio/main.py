@@ -16,11 +16,21 @@ import utils as utils
 import display as display
 # import sensors as sensors
 
-LOG_LEVEL = logging.DEBUG
-LOG_FILE = "/home/pi/log"
-LOG_FORMAT = "%(asctime)s %(levelname)s %(message)s"
 
-logging.basicConfig(filename=LOG_FILE, format=LOG_FORMAT, level=LOG_LEVEL)
+# create logger
+logger = logging.getLogger('radio')
+
+ch = logging.StreamHandler(sys.stdout)
+
+ch.setFormatter(logging.Formatter( "%(asctime)s %(levelname)s %(message)s"))
+
+logger.addHandler(ch)
+logger.setLevel(logging.DEBUG)
+
+
+
+
+
 
 frames = 60
 
@@ -58,13 +68,11 @@ def get_current_station_name(player, stations):
 def print_tags():
     last_tag = ''
     global playback_mode
-    # global display_dict
 
     while True:
         # print("tag loop")
         if playback_mode == PlaybackMode.Radio:
-            # display_dict['display_text'] = get_current_station_name(radioPlayer, stations)
-            display.fixed_text(get_current_station_name(radioPlayer, stations))
+            display.main_text(get_current_station_name(radioPlayer, stations))
 
             while radioPlayer.metadata is not None and "icy-title" in radioPlayer.metadata:
                 current_station = get_current_station(radioPlayer, stations)
@@ -72,9 +80,8 @@ def print_tags():
                 if last_tag != radioPlayer.metadata['icy-title'] and radioPlayer.metadata['icy-title'] not in stations[current_station]['skip_strings']:
                     for replace_string in stations[current_station]['replace_strings']:
                         tag = tag.replace(replace_string, '').lstrip()
-                    logging.debug("New tag is : {}".format(tag))
-                    display.fixed_text(tag)
-                    # display_dict['display_text'] = tag
+                    logger.debug("New tag is : {}".format(tag))
+                    display.main_text(tag)
                     last_tag = radioPlayer.metadata['icy-title']
                 sleep(4/frames)
             sleep(4/frames)
@@ -82,22 +89,20 @@ def print_tags():
         if playback_mode is PlaybackMode.CD:
             try:
                 player = get_current_player()
-                # display_dict['display_text'] = player.metadata['title'] + ' - ' + player.metadata['artist']
-                display.fixed_text(
+                display.main_text(
                     player.metadata['title'] + ' - ' + player.metadata['artist'])
-                logging.debug("CD tag is : {}".format(
+                logger.debug("CD tag is : {}".format(
                     player.metadata['title'], player.metadata['artist']))
 
             except:
                 pass
-                logging.error("Couldn't get CD tag")
+                logger.error("Couldn't get CD tag")
             sleep(4/frames)
 
 
 def infrared_handler():
     lastCode = ''
     global playback_mode
-    # global display_dict
 
     while True:
         player = get_current_player()
@@ -152,9 +157,9 @@ def bt_handler():
         elif iface == "MediaPlayer1":
             if "Track" in changed:
                 track = changed['Track']
-                logging.debug("BT track has cahnged to : {}, {}, {} detected".format(
+                logger.debug("BT track has cahnged to : {}, {}, {} detected".format(
                     track['Title'], track['Artist'], track['Album']))
-                display.fixed_text(
+                display.main_text(
                     track['Title'] + ' - ' + track['Artist'] + ' - ' + track['Album'])
 
     bus.add_signal_receiver(
@@ -188,7 +193,7 @@ def rfid_handler():
             (error, tag_type) = rdr.request()
             if not error:
                 (error, uid) = rdr.anticoll()
-                logging.debug("Tag with UID: {} detected".format(uid))
+                logger.debug("Tag with UID: {} detected".format(uid))
                 if not error:
                     rfid = str(utils.uid_to_num(uid))
                     last_time_tag_detected = True
@@ -200,11 +205,11 @@ def rfid_handler():
                         if time.time() - last_stop > 60:
                             cdPlayer.pause = False
                             cdPlayer.play(music_lib_path + music_lib[rfid])
-                            logging.debug(
+                            logger.debug(
                                 "CD Player started fresh with playlist: {}".format(cdPlayer.playlist))
                         else:
                             cdPlayer.pause = False
-                            logging.debug(
+                            logger.debug(
                                 "CD Player resumed with old playlist: {}".format(cdPlayer.playlist))
 
                     playback_mode = PlaybackMode.CD
@@ -243,6 +248,7 @@ def power_state_handler():
         if state and not last_state: # turned radio on
             if playback_mode == PlaybackMode.Radio:
                 player.playlist_pos = 0
+                player.pause = False
             if playback_mode == PlaybackMode.CD:
                 player.pause = False
             last_state = state
@@ -254,42 +260,38 @@ def power_state_handler():
                 player.stop = True
             if playback_mode == PlaybackMode.CD:
                 player.pause = True
-            display.fixed_text("standby")
+            display.main_text('standby')
             last_state = state
             subprocess.call(["rfkill", "block", "bluetooth"])
             print("player stopped")
 
 
-def volume_knob_handler():
-    my_encoder.watch()
 
 
 def volume_knob_switch_callback():
     volume_mute()
 
-
 def volume_dec_callback(ka):
     volume_change(1)
-
 
 def volume_inc_callback(ka):
     volume_change(-1)
 
-
 def volume_change(amount):
+    print("change volumen", amount)
     player = get_current_player()
-    # display.add_text('rect', 0.5)
-    # display_dict['display_text'] = 'rect'
+
     try:
         player.volume = player.volume + amount
+        display.overlay_rect( int (256 / 100 * player.volume), 1)
     except:
         pass
-        logging.debug("Volume limit reached")
-
+        logger.debug("Volume limit reached")
 
 def volume_mute():
     player = get_current_player()
     player.mute = not player.mute
+
 
 
 def setup_radio(player, stations):
@@ -315,9 +317,18 @@ radioPlayer = mpv.MPV()
 radioPlayer.volume = 25
 cdPlayer = ''
 
+# volume handler
 my_encoder = pyky040.Encoder(CLK=5, DT=6, SW=13)
 my_encoder.setup(scale_min=0, scale_max=100, step=1, dec_callback=volume_dec_callback,
                  inc_callback=volume_inc_callback, sw_callback=volume_knob_switch_callback)
+
+def volume_knob_handler():
+    my_encoder.watch()
+
+volume_thread = threading.Thread(target=volume_knob_handler)
+volume_thread.start()
+# volume handler
+
 
 playback_mode = PlaybackMode.Radio
 
@@ -332,16 +343,33 @@ infrared_thread.start()
 rfid_thread = threading.Thread(target=rfid_handler)
 rfid_thread.start()
 
-volume_thread = threading.Thread(target=volume_knob_handler)
-volume_thread.start()
 
 bt_thread = threading.Thread(target=bt_handler)
 bt_thread.start()
 
-power_state_thread = threading.Thread(target=power_state_handler)
-power_state_thread.start()
 
-logging.debug("Init done")
+def test_func_vol():
+    sleep(10)
+
+    while True:
+        volume_change(2)
+        sleep(0.1)
+
+        player = get_current_player()
+        print (player.volume)
+
+        if player.volume > 90:
+            break
+
+
+        
+vol_change_thread = threading.Thread(target=test_func_vol)
+# vol_change_thread.start() # for debugging
+
+# power_state_thread = threading.Thread(target=power_state_handler)
+# power_state_thread.start()
+
+logger.debug("Init done")
 sleep(2)
 
 sys.exit(0)
