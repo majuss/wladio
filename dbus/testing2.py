@@ -3,8 +3,8 @@ from dbus.mainloop.glib import DBusGMainLoop
 from gi.repository import GLib
 import logging
 
-# LOG_LEVEL = logging.INFO
-LOG_LEVEL = logging.DEBUG
+LOG_LEVEL = logging.INFO
+# LOG_LEVEL = logging.DEBUG
 LOG_FILE = "/home/pi/log"
 LOG_FORMAT = "%(asctime)s %(levelname)s %(message)s"
 
