@@ -1,4 +1,6 @@
-import time, math, threading
+import time
+import math
+import threading
 
 
 from enum import Enum
@@ -12,25 +14,28 @@ from luma.oled.device import ssd1322
 
 display_device = ssd1322(spi(device=0, port=0))
 
-virtual = viewport(display_device, width=display_device.width, height=display_device.height)
+virtual = viewport(display_device, width=display_device.width,
+                   height=display_device.height)
 
-draw_lock = threading.Condition() # global draw lock
+draw_lock = threading.Condition()  # global draw lock
+stop_lock = threading.Condition()  # global stop lock
 
 stop_list = []
-frames = 10
+frames = 40
+main_text_dirty = True
+
 
 class DrawType(Enum):
     Text = 1
     Rect = 2
 
 
-
-def make_text_dict(text, timeout = 0):
+def make_text_dict(text, timeout=0):
     font_size = 68
     font = ImageFont.truetype("fonts/hel_new.otf", font_size)
     (width, height) = font.getsize(text)
 
-    while font.getsize(text)[0] > 256: # text longer than display?
+    while font.getsize(text)[0] > 256:  # text longer than display?
         font_size -= 1
         font = ImageFont.truetype("fonts/hel_new.otf", font_size)
         (width, height) = font.getsize(text)
@@ -48,7 +53,7 @@ def make_text_dict(text, timeout = 0):
         'text': text,
         'x': 0,
         'y': y,
-        'max_position':0,
+        'max_position': 0,
 
         # font stuff
         'font': font,
@@ -58,21 +63,21 @@ def make_text_dict(text, timeout = 0):
     }
 
 
-
-
-
 def renderer(obj):
     global obj_main_text
+    global main_text_dirty
 
     if 0 != obj['data']['timeout']:
         def timeout(obj):
             t_sleep(obj['data']['timeout'])
-            if True == obj['stop']:
-                return
+            with stop_lock:
+                if True == obj['stop']:
+                    return
 
-            main_text(obj_main_text['data']['text']) # switch back to main text
+            # switch back to main text
+            main_text(obj_main_text['data']['text'])
 
-        timeout_thread =  threading.Thread(target=timeout, kwargs={'obj':obj})
+        timeout_thread = threading.Thread(target=timeout, kwargs={'obj': obj})
         timeout_thread.start()
 
     data = obj['data']
@@ -83,7 +88,8 @@ def renderer(obj):
         if 0 == data['extra_size']:
             with draw_lock:
                 with canvas(virtual) as draw:
-                    draw.text((0, data['y']), data['text'], fill='white', font=data['font'])
+                    draw.text((0, data['y']), data['text'],
+                              fill='white', font=data['font'])
 
         # draw text that fits not completely on display, has to check for stop
 
@@ -92,7 +98,8 @@ def renderer(obj):
                 # animate rendering
                 with draw_lock:
                     with canvas(virtual) as draw:
-                        draw.text((-data['x'], data['y']), data['text'], fill='white', font=data['font'])
+                        draw.text(
+                            (-data['x'], data['y']), data['text'], fill='white', font=data['font'])
 
                 if data['x'] == data['extra_size']:
                     # reached end
@@ -107,15 +114,14 @@ def renderer(obj):
                         t_sleep(1/frames)
                     data['x'] += 1
             print('animeated rendering stopped')
-            data['x'] = 0 # reset start position
-    
+            data['x'] = 0  # reset start position
+
     # draw rectangle
     if DrawType.Rect == data['type']:
         with draw_lock:
             with canvas(virtual) as draw:
-                draw.rectangle( (0,0, data['x'], 64), fill='white', outline=None)
-
-
+                draw.rectangle((0, 0, data['x'], 64),
+                               fill='white', outline=None)
 
 
 obj_main_text = {}
@@ -123,65 +129,81 @@ obj_overlay_text = {}
 
 
 def main_text(text):
-    print('main_text', text)
-    global obj_main_text
-    global stop_list
+    with stop_lock:
+        global obj_main_text
+        global stop_list
+        global main_text_dirty
 
-    for obj in stop_list:
-        obj['stop'] = True
+        if main_text_dirty == False and 'data' in obj_main_text and text == obj_main_text['data']['text']:
+            return  # already displaying / return to display this text
 
-    text_dict = make_text_dict(text)
+        print('main_text', text)
 
-    obj_main_text = {
-        'data': text_dict,
-        'stop': False
-    }
-    stop_list = [obj_main_text]
+        for obj in stop_list:
+            obj['stop'] = True
 
-    obj_main_text['thread'] = threading.Thread(target=renderer, kwargs={'obj':obj_main_text})
-    obj_main_text['thread'].start()
+        text_dict = make_text_dict(text)
 
+        obj_main_text = {
+            'data': text_dict,
+            'stop': False
+        }
+        stop_list = [obj_main_text]
+
+        obj_main_text['thread'] = threading.Thread(
+            target=renderer, kwargs={'obj': obj_main_text})
+        obj_main_text['thread'].start()
+        main_text_dirty = False
 
 
 def overlay_text(text, timeout):
-    print('overlay_text', text, timeout)
-    global stop_list
-    global obj_overlay_text
+    with stop_lock:
+        print('overlay_text', text, timeout)
+        global stop_list
+        global obj_overlay_text
+        global main_text_dirty
 
-    for obj in stop_list:
-        obj['stop'] = True
+        for obj in stop_list:
+            obj['stop'] = True
 
-    text_dict = make_text_dict(text, timeout)
+        text_dict = make_text_dict(text, timeout)
 
-    obj_overlay_text = {
-        'data': text_dict,
-        'stop': False
-    }
-    stop_list = [obj_overlay_text]
+        obj_overlay_text = {
+            'data': text_dict,
+            'stop': False
+        }
+        stop_list = [obj_overlay_text]
 
-    obj_overlay_text['thread'] = threading.Thread(target=renderer, kwargs={'obj':obj_overlay_text})
-    obj_overlay_text['thread'].start()
+        main_text_dirty = True
+        obj_overlay_text['thread'] = threading.Thread(
+            target=renderer, kwargs={'obj': obj_overlay_text})
+        obj_overlay_text['thread'].start()
 
-def overlay_rect(x, timeout = 2):
-    print('overlay_rect')
-    global stop_list
 
-    for obj in stop_list:
-        obj['stop'] = True
+def overlay_rect(x, timeout=2):
+    with stop_lock:
+        print('overlay_rect')
+        global stop_list
+        global main_text_dirty
 
-    obj_text = {
-        'data': {
-            'type': DrawType.Rect,
-            'x': x,
-            'timeout': timeout
-        },
-        'stop': False
-    }
+        for obj in stop_list:
+            obj['stop'] = True
 
-    stop_list = [obj_text]
+        obj_text = {
+            'data': {
+                'type': DrawType.Rect,
+                'x': x,
+                'timeout': timeout
+            },
+            'stop': False
+        }
 
-    obj_text['thread'] = threading.Thread(target=renderer, kwargs={'obj':obj_text})
-    obj_text['thread'].start()
+        stop_list = [obj_text]
+
+        main_text_dirty = True
+        obj_text['thread'] = threading.Thread(
+            target=renderer, kwargs={'obj': obj_text})
+        obj_text['thread'].start()
 
 
 main_text('M & M Radio')
@@ -194,9 +216,7 @@ def test_func():
 
 
 test_trhead = threading.Thread(target=test_func)
-#test_trhead.start() # for debugging
-
-
+# test_trhead.start() # for debugging
 
 
 def display_loop():
@@ -215,8 +235,8 @@ def display_loop():
         # print('would print at', latestItem['x'], latestItem['y'], latestItem['text'])
 
         with canvas(virtual) as draw:
-            draw.text((-latestItem['x'], latestItem['y']), latestItem['text'], fill='white', font=latestItem['font'])
-
+            draw.text((-latestItem['x'], latestItem['y']),
+                      latestItem['text'], fill='white', font=latestItem['font'])
 
         # recalc position for next step
         if latestItem['x'] == latestItem['extra_size']:
