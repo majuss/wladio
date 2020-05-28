@@ -7,6 +7,11 @@ Building a WIFI radio based on a Raspberry Pi
 AMP is a TDA7492. It delivers 50 Watt.
 USB-Klinke Interface is: Sabrent USB Externe Soundkarte - C-Media Electronics, Inc. Audio Adapter (Unitek Y-247A)
 
+## On / Off button
+
+- Real switch that cuts the 12 V of the AMP
+- Connected via voltage divider to GPIO12
+
 ## Display
 
 Links:
