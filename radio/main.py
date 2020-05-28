@@ -14,7 +14,7 @@ import subprocess
 
 import utils as utils
 import display as display
-# import sensors as sensors
+import sensors_dummy as sensors
 
 # create logger
 logger = logging.getLogger('radio')
@@ -36,11 +36,12 @@ class PlaybackMode(Enum):
     CD = 2
     BT = 3
 
+temps = []
 
-def play_stream():
-    while True:
-        radioPlayer.wait_for_property('core-idle', lambda x: not x)
-        radioPlayer.wait_for_property('core-idle')
+# def play_stream():
+#     while True:
+#         radioPlayer.wait_for_property('core-idle', lambda x: not x)
+#         radioPlayer.wait_for_property('core-idle')
 
 
 def get_current_station(player, stations):
@@ -287,10 +288,19 @@ def player_playlist_next(player):
         if playback_mode == PlaybackMode.Radio:
             display.main_text(get_current_station_name(radioPlayer, stations))
 
+def sensor_handler():
+    global temps
+    while True:
+        bme280, bme680 = sensors.get_data()
+        temps = [bme280, bme680]
+        print(temps)
+        sleep(60)
 
 def volume_knob_switch_callback():
     volume_mute()
 
+def volume_knob_handler():
+    my_encoder.watch()
 
 def volume_dec_callback(ka):
     volume_change(1)
@@ -347,15 +357,8 @@ my_encoder = pyky040.Encoder(CLK=5, DT=6, SW=13)
 my_encoder.setup(scale_min=0, scale_max=100, step=1, dec_callback=volume_dec_callback,
                  inc_callback=volume_inc_callback, sw_callback=volume_knob_switch_callback)
 
-
-def volume_knob_handler():
-    my_encoder.watch()
-
-
 volume_thread = threading.Thread(target=volume_knob_handler)
 volume_thread.start()
-# volume handler
-
 
 playback_mode = PlaybackMode.Radio
 
@@ -370,9 +373,11 @@ infrared_thread.start()
 rfid_thread = threading.Thread(target=rfid_handler)
 rfid_thread.start()
 
-
 bt_thread = threading.Thread(target=bt_handler)
 bt_thread.start()
+
+sensor_thread = threading.Thread(target=sensor_handler)
+sensor_thread.start()
 
 
 def test_func_vol():
