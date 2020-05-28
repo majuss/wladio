@@ -114,13 +114,14 @@ def infrared_handler():
             lastCode = codeIR[0]
         else:
             if "next" in codeIR:
+                logger.debug("Next IR track")
                 player_playlist_next(player)
 
             if "prev" in codeIR:
                 diff_time = time.time() - last_prev
                 last_prev = time.time()
 
-                if 2 < diff_time and diff_time < 10:  # only when two button presses occure in a time frame from greater 2 and smaler 10 seconds
+                if 2 < diff_time and diff_time < 10:  # only when two button presses occure in a time frame from greater 2 and smaller 10 seconds
                     player.seek(-15)
                 elif diff_time < 2:
                     player_playlist_prev(player)
@@ -311,7 +312,7 @@ def volume_inc_callback(ka):
 
 
 def volume_change(amount):
-    print("change volumen", amount)
+    print("change volume", amount)
     player = get_current_player()
 
     try:
