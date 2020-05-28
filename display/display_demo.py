@@ -9,6 +9,8 @@ from luma.core.virtual import viewport
 from luma.oled.device import ssd1322
 
 display_device = ssd1322(spi(device=0, port=0))
+device = ssd1322(serial)
+
 
 virtual = viewport(display_device, width=display_device.width, height=display_device.height)
 
