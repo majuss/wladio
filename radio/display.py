@@ -32,12 +32,12 @@ class DrawType(Enum):
 
 def make_text_dict(text, timeout=0):
     font_size = 68
-    font = ImageFont.truetype("fonts/hel_new.otf", font_size)
+    font = ImageFont.truetype("ressources/hel_new.otf", font_size)
     (width, height) = font.getsize(text)
 
     while font.getsize(text)[0] > 256:  # text longer than display?
         font_size -= 1
-        font = ImageFont.truetype("fonts/hel_new.otf", font_size)
+        font = ImageFont.truetype("ressources/hel_new.otf", font_size)
         (width, height) = font.getsize(text)
 
         if font_size == 28:
