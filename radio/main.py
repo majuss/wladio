@@ -1,16 +1,16 @@
-from pyky040 import pyky040
-import mpv
-import threading
-from time import sleep
-import sys
-import lirc
 from pirc522 import RFID
 from enum import Enum
+from time import sleep
+
+import mpv
+import threading
+import sys
+import lirc
 import math
 import logging
 import time
 import subprocess
-
+import RPi.GPIO as GPIO
 
 import utils as utils
 import display as display
@@ -24,6 +24,7 @@ ch.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
 logger.addHandler(ch)
 logger.setLevel(logging.DEBUG)
 
+GPIO.setmode(GPIO.BCM)   
 frames = 60
 
 # Load stations and music library file
@@ -42,6 +43,97 @@ temps = []
 #     while True:
 #         radioPlayer.wait_for_property('core-idle', lambda x: not x)
 #         radioPlayer.wait_for_property('core-idle')
+
+
+def setup_buttons(next_btn, prev_btn, pause_btn, garage_door, driveway, unknown, power, vol_clk, vol_dt, vol_sw):
+
+    GPIO.setup(next_btn, GPIO.IN, GPIO.PUD_UP)
+    GPIO.setup(prev_btn, GPIO.IN, GPIO.PUD_UP)
+    GPIO.setup(pause_btn, GPIO.IN, GPIO.PUD_UP)
+    GPIO.setup(garage_door, GPIO.IN, GPIO.PUD_UP)
+    GPIO.setup(driveway, GPIO.IN, GPIO.PUD_UP)
+    GPIO.setup(unknown, GPIO.IN, GPIO.PUD_UP)
+
+    GPIO.setup(power, GPIO.IN, GPIO.PUD_DOWN)
+
+    GPIO.setup(vol_clk, GPIO.IN, GPIO.PUD_DOWN)
+    GPIO.setup(vol_dt, GPIO.IN, GPIO.PUD_DOWN)
+    GPIO.setup(vol_sw, GPIO.IN, GPIO.PUD_UP)
+
+    def callback_next_btn(channel):
+        logger.debug("callie next")
+
+    def callback_prev_btn(channel):
+        logger.debug("callie prev")
+
+    def callback_pause_btn(channel):
+        logger.debug("callie pause")
+
+    def callback_garage_door(channel):
+        logger.debug("callie garage_door")
+
+    def callback_driveway(channel):
+        logger.debug("callie driveway")
+
+    def callback_unknown(channel):
+        logger.debug("callie unknown")
+
+    def callback_power(channel):
+        global playback_mode
+
+        sleep(0.01)
+        player = get_current_player()
+        if GPIO.input(channel):
+            if playback_mode == PlaybackMode.Radio:
+                player.playlist_pos = 0
+                player.pause = False
+            if playback_mode == PlaybackMode.CD:
+                player.pause = False
+            subprocess.call(["rfkill", "unblock", "bluetooth"])
+            logger.debug("player resumed")
+        else:
+            if playback_mode == PlaybackMode.Radio:
+                player.stop = True
+            if playback_mode == PlaybackMode.CD:
+                player.pause = True
+            display.main_text('standby')
+            subprocess.call(["rfkill", "block", "bluetooth"])
+            logger.debug("player stopped")
+
+
+
+    direction = True
+    clk_last = 0
+    clk_current = 0
+    clk_last = GPIO.input(vol_clk)
+
+    def callback_vol(null):
+        clk_current = GPIO.input(vol_clk)
+        if clk_current != clk_last:
+            if GPIO.input(vol_dt) != clk_current:
+                direction = True
+            else:
+                direction = False
+            if direction:
+                logger.debug("raise vol")
+            else:
+                logger.debug("vol falling")
+    
+
+    def callback_vol_sw(null):
+        logger.debug("vol switch pressed")
+
+    GPIO.add_event_detect(next_btn, GPIO.FALLING, callback=callback_next_btn, bouncetime=350)
+    GPIO.add_event_detect(prev_btn, GPIO.FALLING, callback=callback_prev_btn, bouncetime=350)
+    GPIO.add_event_detect(pause_btn, GPIO.FALLING, callback=callback_pause_btn, bouncetime=350)
+    GPIO.add_event_detect(garage_door, GPIO.FALLING, callback=callback_garage_door, bouncetime=350)
+    GPIO.add_event_detect(driveway, GPIO.FALLING, callback=callback_driveway, bouncetime=350)
+    GPIO.add_event_detect(unknown, GPIO.FALLING, callback=callback_unknown, bouncetime=350)
+
+    GPIO.add_event_detect(power, GPIO.BOTH, callback=callback_power, bouncetime=250)
+
+    GPIO.add_event_detect(vol_clk, GPIO.BOTH, callback=callback_vol, bouncetime=1)
+    GPIO.add_event_detect(vol_sw, GPIO.FALLING, callback=callback_vol_sw, bouncetime=350)   
 
 
 def get_current_station(player, stations):
@@ -233,40 +325,6 @@ def rfid_handler():
         raise
 
 
-def power_state_handler():
-    import RPi.GPIO as GPIO
-    global playback_mode
-
-    GPIO.setmode(GPIO.BCM)
-    GPIO.setup(12, GPIO.IN)
-
-    last_state = GPIO.input(12)
-    while True:
-        state = GPIO.input(12)
-        sleep(0.1)
-        player = get_current_player()
-
-        if state and not last_state:  # turned radio on
-            if playback_mode == PlaybackMode.Radio:
-                player.playlist_pos = 0
-                player.pause = False
-            if playback_mode == PlaybackMode.CD:
-                player.pause = False
-            last_state = state
-            subprocess.call(["rfkill", "unblock", "bluetooth"])
-            print("player resumed")
-
-        if not state and last_state:  # turned radio off
-            if playback_mode == PlaybackMode.Radio:
-                player.stop = True
-            if playback_mode == PlaybackMode.CD:
-                player.pause = True
-            display.main_text('standby')
-            last_state = state
-            subprocess.call(["rfkill", "block", "bluetooth"])
-            print("player stopped")
-
-
 # prev / next control
 def player_playlist_prev(player):
     try:
@@ -353,15 +411,20 @@ radioPlayer = mpv.MPV()
 radioPlayer.volume = 25
 cdPlayer = ''
 
-# volume handler
-my_encoder = pyky040.Encoder(CLK=5, DT=6, SW=13)
-my_encoder.setup(scale_min=0, scale_max=100, step=1, dec_callback=volume_dec_callback,
-                 inc_callback=volume_inc_callback, sw_callback=volume_knob_switch_callback)
-
-volume_thread = threading.Thread(target=volume_knob_handler)
-volume_thread.start()
-
 playback_mode = PlaybackMode.Radio
+
+setup_buttons(
+    4, # next_btn
+    12, # prev_btn
+    19, # pause_btn
+    20, # garage_door
+    21, # driveway
+    27, # unknown
+    23, # power
+    5,  # vol clock
+    6,  # vol dt
+    13, # vol sw
+    )
 
 setup_radio(radioPlayer, stations)
 
@@ -393,8 +456,6 @@ def test_func_vol():
 test_thread = threading.Thread(target=test_func_vol)
 test_thread.start()  # for debugging
 
-# power_state_thread = threading.Thread(target=power_state_handler)
-# power_state_thread.start()
 
 logger.debug("Init done")
 sleep(2)
