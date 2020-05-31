@@ -71,5 +71,3 @@ rm -rf python-lirc
 # set pinmode to BCM and change the PINs to BCM not Board Pins
 # set RST, IRQ an CE Pins to match documentation (16, 26, 1)
 
-# In venv/lib/python3.7/site-packages/pyky040.py
-# Line 122 set interval to 100000 instead of 1000

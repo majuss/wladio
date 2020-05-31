@@ -38,6 +38,8 @@ Links:
 - https://wiki.d-diot.com/system_administration/manual_installation/8_home_assistant_configuration#lirc
 - https://codingworld.io/project/infrarot-empfaenger-und-sender-am-pi
 
+IR code should get rewritten with more recent lib: https://github.com/adafruit/Adafruit_CircuitPython_IRRemote
+
 VS1838B
 Pinout seen from front of sensor:
 |1|2|3|
