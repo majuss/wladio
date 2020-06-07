@@ -12,6 +12,7 @@ import time
 import subprocess
 import RPi.GPIO as GPIO
 
+import constants
 import utils as utils
 import display as display
 import sensors_dummy as sensors
@@ -24,12 +25,12 @@ ch.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
 logger.addHandler(ch)
 logger.setLevel(logging.DEBUG)
 
-GPIO.setmode(GPIO.BCM)   
-frames = 60
+GPIO.setmode(GPIO.BCM)
+
+FRAMES = constants.FPS
 
 # Load stations and music library file
 stations, music_lib = utils.openFiles()
-music_lib_path = '/home/pi/'
 
 
 class PlaybackMode(Enum):
@@ -37,12 +38,8 @@ class PlaybackMode(Enum):
     CD = 2
     BT = 3
 
-temps = []
 
-# def play_stream():
-#     while True:
-#         radioPlayer.wait_for_property('core-idle', lambda x: not x)
-#         radioPlayer.wait_for_property('core-idle')
+temps = []
 
 
 def setup_buttons(next_btn, prev_btn, pause_btn, garage_door, driveway, unknown, power, vol_clk, vol_dt, vol_sw):
@@ -61,13 +58,15 @@ def setup_buttons(next_btn, prev_btn, pause_btn, garage_door, driveway, unknown,
     GPIO.setup(vol_sw, GPIO.IN, GPIO.PUD_UP)
 
     def callback_next_btn(channel):
-        logger.debug("callie next")
+        print('NEXT BTN')
+        player_playlist_next(get_current_player())
 
     def callback_prev_btn(channel):
-        logger.debug("callie prev")
+        print('PREV BTN')
+        player_playlist_prev(get_current_player())
 
     def callback_pause_btn(channel):
-        logger.debug("callie pause")
+        player_toggle_play_pause(get_current_player())
 
     def callback_garage_door(channel):
         logger.debug("callie garage_door")
@@ -100,8 +99,6 @@ def setup_buttons(next_btn, prev_btn, pause_btn, garage_door, driveway, unknown,
             subprocess.call(["rfkill", "block", "bluetooth"])
             logger.debug("player stopped")
 
-
-
     direction = True
     clk_last = 0
     clk_current = 0
@@ -115,32 +112,44 @@ def setup_buttons(next_btn, prev_btn, pause_btn, garage_door, driveway, unknown,
             else:
                 direction = False
             if direction:
-                logger.debug("raise vol")
+                volume_change(1)  # volume change up
             else:
-                logger.debug("vol falling")
-    
+                volume_change(-1)  # volume change down
 
     def callback_vol_sw(null):
-        logger.debug("vol switch pressed")
+        volume_mute_toggle()  # volume mute toggle
 
-    GPIO.add_event_detect(next_btn, GPIO.FALLING, callback=callback_next_btn, bouncetime=350)
-    GPIO.add_event_detect(prev_btn, GPIO.FALLING, callback=callback_prev_btn, bouncetime=350)
-    GPIO.add_event_detect(pause_btn, GPIO.FALLING, callback=callback_pause_btn, bouncetime=350)
-    GPIO.add_event_detect(garage_door, GPIO.FALLING, callback=callback_garage_door, bouncetime=350)
-    GPIO.add_event_detect(driveway, GPIO.FALLING, callback=callback_driveway, bouncetime=350)
-    GPIO.add_event_detect(unknown, GPIO.FALLING, callback=callback_unknown, bouncetime=350)
+    GPIO.add_event_detect(next_btn, GPIO.FALLING,
+                          callback=callback_next_btn, bouncetime=350)
+    GPIO.add_event_detect(prev_btn, GPIO.FALLING,
+                          callback=callback_prev_btn, bouncetime=350)
+    GPIO.add_event_detect(pause_btn, GPIO.FALLING,
+                          callback=callback_pause_btn, bouncetime=350)
+    GPIO.add_event_detect(garage_door, GPIO.FALLING,
+                          callback=callback_garage_door, bouncetime=350)
+    GPIO.add_event_detect(driveway, GPIO.FALLING,
+                          callback=callback_driveway, bouncetime=350)
+    GPIO.add_event_detect(unknown, GPIO.FALLING,
+                          callback=callback_unknown, bouncetime=350)
 
-    GPIO.add_event_detect(power, GPIO.BOTH, callback=callback_power, bouncetime=250)
+    GPIO.add_event_detect(
+        power, GPIO.BOTH, callback=callback_power, bouncetime=250)
 
-    GPIO.add_event_detect(vol_clk, GPIO.BOTH, callback=callback_vol, bouncetime=1)
-    GPIO.add_event_detect(vol_sw, GPIO.FALLING, callback=callback_vol_sw, bouncetime=350)   
+    GPIO.add_event_detect(vol_clk, GPIO.BOTH,
+                          callback=callback_vol, bouncetime=1)
+    GPIO.add_event_detect(vol_sw, GPIO.FALLING,
+                          callback=callback_vol_sw, bouncetime=350)
 
 
-def get_current_station(player, stations):
+def get_current_station(player, stations):  # todo function name should add _key
     url = player.playlist[player.playlist_pos]['filename']
     for station in stations:
         if url == stations[station]['url']:
             return station
+
+
+def get_station_obj(station_name):
+    return stations[station_name]
 
 
 def get_current_station_name(player, stations):
@@ -151,23 +160,34 @@ def get_current_station_name(player, stations):
     return 'NO STATION FOUND'
 
 
+def get_current_player():
+    if playback_mode == PlaybackMode.Radio:
+        return radioPlayer
+    if playback_mode == PlaybackMode.CD:
+        return cdPlayer
+    # if playback_mode == playback_mode.BT:
+    #     return btPlayer
+
+
 def print_tags():
     last_tag = ''
     global playback_mode
 
     while True:
-        # print("tag loop")
         sleep(1)
 
         if playback_mode == PlaybackMode.Radio:
             try:
-                # print('Radio tags:')
-                # if radioPlayer.metadata is not None:
-                #     print(radioPlayer.metadata)
-
                 if radioPlayer.metadata is not None and 'icy-title' in radioPlayer.metadata:  # soemtimes buggy
+                    station = get_station_obj(
+                        get_current_station(radioPlayer, stations))
                     tag = radioPlayer.metadata['icy-title']
-                    display.main_text(tag)
+                    print('tag:  "' + tag + '"')
+
+                    if tag in station['skip_strings']:
+                        tag = station['name']
+
+                    display.tag_text(tag)
 
             except Exception as e:
                 logger.debug(
@@ -177,7 +197,7 @@ def print_tags():
         if playback_mode is PlaybackMode.CD:
             try:
                 player = get_current_player()
-                display.main_text(
+                display.tag_text(
                     player.metadata['title'] + ' - ' + player.metadata['artist'])
                 logger.debug("CD tag is : {}".format(
                     player.metadata['title'], player.metadata['artist']))
@@ -188,6 +208,23 @@ def print_tags():
 
 
 def infrared_handler():
+    # import pulseio
+    # import adafruit_irremote
+
+    # pulses = pulseio.PulseIn(22, maxlen=200, idle_state=False)
+    # decoder = adafruit_irremote.GenericDecode()
+
+    # while True:
+    #     # pulse = decoder.read_pulses(pulses)
+    #     # print(pulse)
+    #     try:
+    #         for pulse in pulses:
+    #             print(pulse)
+    #     except Exception as e:
+    #         print(e)
+
+    #     sleep(0.1)
+
     lastCode = ''
     last_prev = 0
     global playback_mode
@@ -219,10 +256,10 @@ def infrared_handler():
                     player_playlist_prev(player)
 
             if "menu" in codeIR:
-                volume_mute()
+                volume_mute_toggle()
 
             if "play" in codeIR:
-                player.pause = not player.pause
+                player_toggle_play_pause(player)
         sleep(0.1)
 
 
@@ -230,29 +267,45 @@ def bt_handler():
     import dbus
     from dbus.mainloop.glib import DBusGMainLoop
     from gi.repository import GLib
-    global playback_mode
 
     DBusGMainLoop(set_as_default=True)
 
     bus = dbus.SystemBus()
 
     def device_property_changed(interface, changed, invalidated, path):
+        global playback_mode
+
         iface = interface[interface.rfind(".") + 1:]
         if iface == "Device1":
             if "Connected" in changed:
                 if changed["Connected"]:
-                    playback_mode.BT
                     volume_mute()
+                    playback_mode = PlaybackMode.BT
+                    print('SET MODE TO BT')
+                    display.set_bt_status(True)
                 else:
-                    playback_mode.Radio
-                    volume_mute()
+                    print('SET MODE TO RADIO')
+                    playback_mode = PlaybackMode.Radio
+                    volume_unmute()
+                    display.set_bt_status(False)
         elif iface == "MediaPlayer1":
+            print(changed)
             if "Track" in changed:
                 track = changed['Track']
-                logger.debug("BT track has cahnged to : {}, {}, {} detected".format(
-                    track['Title'], track['Artist'], track['Album']))
-                display.main_text(
-                    track['Title'] + ' - ' + track['Artist'] + ' - ' + track['Album'])
+                txt = []
+
+                if 'Title' in track:
+                    txt.append(track['Title'])
+                if 'Artist' in track:
+                    txt.append(track['Artist'])
+                if 'Album' in track:
+                    txt.append(track['Album'])
+
+                txt = ' - '.join(txt)
+
+                logger.debug(
+                    "BT track has changed to : {} detected".format(txt))
+                display.main_text(txt)
 
     bus.add_signal_receiver(
         device_property_changed,
@@ -271,7 +324,7 @@ def rfid_handler():
     global cdPlayer
 
     cdPlayer = mpv.MPV(loop_playlist='inf')
-    cdPlayer.volume = 30
+    cdPlayer.volume = constants.CD_PLAYER_START_VOL
 
     last_stop = 0
 
@@ -296,7 +349,8 @@ def rfid_handler():
 
                         if time.time() - last_stop > 60:
                             cdPlayer.pause = False
-                            cdPlayer.play(music_lib_path + music_lib[rfid])
+                            cdPlayer.play(
+                                constants.MUSIC_LIB_PATH + music_lib[rfid])
                             logger.debug(
                                 "CD Player started fresh with playlist: {}".format(cdPlayer.playlist))
                         else:
@@ -314,7 +368,7 @@ def rfid_handler():
                 # tag was removed or track finished playing
                 if last_time_tag_detected is False:
                     cdPlayer.pause = True
-                    last_stop = int(time.time())
+                    last_stop = time.time()
 
                     # switch back to radio
                     radioPlayer.mute = False
@@ -325,7 +379,7 @@ def rfid_handler():
         raise
 
 
-# prev / next control
+# C O N T R O L S START
 def player_playlist_prev(player):
     try:
         player.playlist_prev()
@@ -347,27 +401,6 @@ def player_playlist_next(player):
         if playback_mode == PlaybackMode.Radio:
             display.main_text(get_current_station_name(radioPlayer, stations))
 
-def sensor_handler():
-    global temps
-    while True:
-        bme280, bme680 = sensors.get_data()
-        temps = [bme280, bme680]
-        print(temps)
-        sleep(60)
-
-def volume_knob_switch_callback():
-    volume_mute()
-
-def volume_knob_handler():
-    my_encoder.watch()
-
-def volume_dec_callback(ka):
-    volume_change(1)
-
-
-def volume_inc_callback(ka):
-    volume_change(-1)
-
 
 def volume_change(amount):
     print("change volume", amount)
@@ -383,9 +416,31 @@ def volume_change(amount):
         logger.debug("Volume limit reached")
 
 
-def volume_mute():
+def volume_mute_toggle():
     player = get_current_player()
     player.mute = not player.mute
+
+def volume_unmute():
+    player = get_current_player()
+    player.mute = False
+
+def volume_mute():
+    player = get_current_player()
+    player.mute = True
+
+def player_toggle_play_pause(player):
+    player.pause = not player.pause
+
+# C O N T R O L S END
+
+
+def sensor_handler():
+    global temps
+    while True:
+        bme280, bme680 = sensors.get_data()
+        temps = [bme280, bme680]
+        print(temps)
+        sleep(60)
 
 
 def setup_radio(player, stations):
@@ -396,35 +451,26 @@ def setup_radio(player, stations):
     player.playlist_pos = 0
 
 
-def get_current_player():
-    if playback_mode == playback_mode.Radio:
-        return radioPlayer
-    if playback_mode == playback_mode.CD:
-        return cdPlayer
-    # if playback_mode == playback_mode.BT:
-    #     return btPlayer
-
-
 rdr = RFID()
 sockid = lirc.init("radio", blocking=True)
 radioPlayer = mpv.MPV()
-radioPlayer.volume = 25
+radioPlayer.volume = constants.RADIO_PLAYER_START_VOL
 cdPlayer = ''
 
 playback_mode = PlaybackMode.Radio
 
 setup_buttons(
-    4, # next_btn
-    12, # prev_btn
-    19, # pause_btn
-    20, # garage_door
-    21, # driveway
-    27, # unknown
-    23, # power
+    4,  # next_btn
+    12,  # prev_btn
+    19,  # pause_btn
+    20,  # garage_door
+    21,  # driveway
+    27,  # unknown
+    23,  # power
     5,  # vol clock
     6,  # vol dt
-    13, # vol sw
-    )
+    13,  # vol sw
+)
 
 setup_radio(radioPlayer, stations)
 
@@ -454,7 +500,7 @@ def test_func_vol():
 
 
 test_thread = threading.Thread(target=test_func_vol)
-test_thread.start()  # for debugging
+# test_thread.start()  # for debugging
 
 
 logger.debug("Init done")

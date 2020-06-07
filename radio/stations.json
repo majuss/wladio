@@ -5,7 +5,8 @@
 		"url": "http://rbb-fritz-live.cast.addradio.de/rbb/fritz/live/mp3/128/stream.mp3",
 		"skip_strings": [
 			"It’s Fritz",
-			"Fritz vom rbb"
+			"Fritz vom rbb",
+			""
 		],
 		"replace_strings": [
 			" icy-title:",
@@ -16,7 +17,9 @@
 		"key": "dlf",
 		"name": "Deutschlandfunk",
 		"url": "http://st01.dlf.de/dlf/01/128/mp3/stream.mp3",
-		"skip_strings": [],
+		"skip_strings": [
+			""
+		],
 		"replace_strings": []
 	},
 	"radioeins": {
@@ -25,7 +28,17 @@
 		"url": "http://rbb-radioeins-live.cast.addradio.de/rbb/radioeins/live/mp3/128/stream.mp3",
 		"skip_strings": [
 			"radioeins vom rbb",
-			"nur für Erwachsene"
+			"nur für Erwachsene",
+			""
+		],
+		"replace_strings": []
+	},
+	"bbc": {
+		"key": "bbc_wsn",
+		"name": "BBC WSN",
+		"url": "http://bbcwssc.ic.llnwd.net/stream/bbcwssc_mp1_ws-einws",
+		"skip_strings": [
+			""
 		],
 		"replace_strings": []
 	}
