@@ -15,16 +15,18 @@ from luma.oled.device import ssd1322
 serial = spi(device=0, port=0)
 device = ssd1322(serial)
 
+
 def main():
     img_path = os.path.abspath(os.path.join(os.path.dirname(__file__),
-        'images', '../../radio/ressources/cloud.png'))
+                                            'images', '../../radio/ressources/cloud.png'))
     logo = Image.open(img_path).convert("RGBA")
     # fff = Image.new(logo.mode, logo.size, (255,) * 4)
     # draw2 = ImageDraw.Draw(logo)
     # logo.resize((256,64), resample=Image.BILINEAR)
     # print(logo.size)
     background = Image.new("RGBA", device.size, "black")
-    background.paste(logo, (100,30))
+    background.paste(logo, (100, 30))
+    x = background.convert(device.mode)
 
     # img = Image.composite(background, logo)
     # posn = ((device.width - logo.width) // 2, 0)
@@ -36,13 +38,13 @@ def main():
     #         background.paste(fff, posn)
     #         device.display(logo.convert(device.mode))
     while True:
-        device.display(background.convert(device.mode))
+        device.display(x)
         # with canvas(device) as draw:
-            #draw.png(logo)
-            # draw(logo)
-            # print(draw.__dir__())
-            # print(type(fff))
-            
+        # draw.png(logo)
+        # draw(logo)
+        # print(draw.__dir__())
+        # print(type(fff))
+
 
 if __name__ == "__main__":
     try:
