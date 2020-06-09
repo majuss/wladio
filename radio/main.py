@@ -39,7 +39,7 @@ class PlaybackMode(Enum):
     BT = 3
 
 
-temps = []
+power_last = 0  # when was power button last pressed?
 
 
 def setup_buttons(next_btn, prev_btn, pause_btn, garage_door, driveway, unknown, power, vol_clk, vol_dt, vol_sw):
@@ -79,25 +79,43 @@ def setup_buttons(next_btn, prev_btn, pause_btn, garage_door, driveway, unknown,
 
     def callback_power(channel):
         global playback_mode
+        global power_last
 
-        sleep(0.01)
+        if time.time() - power_last < 2:
+            print('power button pressed < 2 secs')
+            return
+
+        power_last = time.time()
+
+        sleep(0.1)
         player = get_current_player()
-        if GPIO.input(channel):
+
+        print('GPIO')
+        print(GPIO.input(channel))
+
+        if GPIO.input(channel):  # standby is ON
             if playback_mode == PlaybackMode.Radio:
-                player.playlist_pos = 0
                 player.pause = False
             if playback_mode == PlaybackMode.CD:
                 player.pause = False
+            display.set_standby_onoff(False)
             subprocess.call(["rfkill", "unblock", "bluetooth"])
             logger.debug("player resumed")
-        else:
-            if playback_mode == PlaybackMode.Radio:
-                player.stop = True
-            if playback_mode == PlaybackMode.CD:
-                player.pause = True
-            display.main_text('standby')
-            subprocess.call(["rfkill", "block", "bluetooth"])
-            logger.debug("player stopped")
+        else:  # sandby is ON
+            try:
+                print('set main text')
+                # display.main_text('standby')
+                # if playback_mode == PlaybackMode.Radio:
+                #     player.stop = True
+                # if playback_mode == PlaybackMode.CD:
+                #     player.pause = True
+                print('setted main text')
+                display.set_standby_onoff(True)
+                subprocess.call(["rfkill", "block", "bluetooth"])
+                logger.debug("player stopped")
+            except Exception as val:
+                print('failed')
+                print(val)
 
     direction = True
     clk_last = 0
@@ -197,10 +215,19 @@ def print_tags():
         if playback_mode is PlaybackMode.CD:
             try:
                 player = get_current_player()
-                display.tag_text(
-                    player.metadata['title'] + ' - ' + player.metadata['artist'])
-                logger.debug("CD tag is : {}".format(
-                    player.metadata['title'], player.metadata['artist']))
+
+                txt = '(' + str(player.playlist_pos + 1) + \
+                    '/' + str(player.playlist_count) + ')'
+
+                txts = []
+                if 'title' in player.metadata:
+                    txts.append(player.metadata['title'])
+                if 'artist' in player.metadata:
+                    txts.append(player.metadata['artist'])
+                txts = txt + ' ' + ' - '.join(txts)
+
+                display.tag_text(txts)
+                # logger.debug("CD tag is : {}".format(txts))
 
             except:
                 pass
@@ -338,7 +365,7 @@ def rfid_handler():
             (error, tag_type) = rdr.request()
             if not error:
                 (error, uid) = rdr.anticoll()
-                logger.debug("Tag with UID: {} detected".format(uid))
+                # logger.debug("Tag with UID: {} detected".format(uid))
                 if not error:
                     rfid = str(utils.uid_to_num(uid))
                     last_time_tag_detected = True
@@ -420,27 +447,21 @@ def volume_mute_toggle():
     player = get_current_player()
     player.mute = not player.mute
 
+
 def volume_unmute():
     player = get_current_player()
     player.mute = False
+
 
 def volume_mute():
     player = get_current_player()
     player.mute = True
 
+
 def player_toggle_play_pause(player):
     player.pause = not player.pause
 
 # C O N T R O L S END
-
-
-def sensor_handler():
-    global temps
-    while True:
-        bme280, bme680 = sensors.get_data()
-        temps = [bme280, bme680]
-        print(temps)
-        sleep(60)
 
 
 def setup_radio(player, stations):
@@ -486,17 +507,15 @@ rfid_thread.start()
 bt_thread = threading.Thread(target=bt_handler)
 bt_thread.start()
 
-sensor_thread = threading.Thread(target=sensor_handler)
-sensor_thread.start()
-
 
 def test_func_vol():
-    sleep(10)
-
-    player_playlist_next(radioPlayer)
-
     sleep(3)
-    player_playlist_next(radioPlayer)
+
+    display.set_standby_onoff(True)
+
+    sleep(5)
+
+    display.set_standby_onoff(False)
 
 
 test_thread = threading.Thread(target=test_func_vol)

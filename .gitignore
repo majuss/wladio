@@ -5,6 +5,7 @@
 *.m4a
 *.otf
 luma.examples/
+fonts-DSEG_v046/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
