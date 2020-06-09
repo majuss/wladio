@@ -12,7 +12,7 @@ from luma.core.render import canvas
 from luma.core.virtual import viewport, snapshot, hotspot
 from luma.oled.device import ssd1322
 
-import constants
+import constants as CONST
 
 import sensors_dummy as sensors
 
@@ -25,7 +25,7 @@ draw_lock = threading.Condition()  # global draw lock
 stop_lock = threading.Condition()  # global stop lock
 
 stop_list = []
-sleep_time = 1  # /60
+sleep_time = CONST.FPS  # /60
 main_text_dirty = True  # main text was overdrawn
 volume_changes = False  # the volume bar is visible
 
@@ -40,9 +40,9 @@ def get_font(font_size, font_path='ressources/hel_new.otf'):
 font_28 = get_font(28)
 font_16 = get_font(16)
 font_16_seg = get_font(
-    16, '../fonts-DSEG_v046/DSEG14-Classic-MINI/DSEG14ClassicMini-Regular.ttf')
+    16, 'ressources/DSEG14ClassicMini-Regular.ttf')
 font_32_seg = get_font(
-    32, '../fonts-DSEG_v046/DSEG14-Classic-MINI/DSEG14ClassicMini-Regular.ttf')
+    32, 'ressources/DSEG14ClassicMini-Regular.ttf')
 
 
 class DrawType(Enum):
@@ -167,10 +167,10 @@ class Main_Hotspot(hotspot):
 
                 elif 0 == data['x']:
                     data['next'] = time.time() + 2
-                    data['x'] += constants.SCROLL_SPEED
+                    data['x'] += CONST.SCROLL_SPEED
 
                 else:
-                    data['x'] += constants.SCROLL_SPEED
+                    data['x'] += CONST.SCROLL_SPEED
             else:
                 data['next'] = time.time() + 60
 
@@ -324,9 +324,12 @@ def set_standby_onoff(onoff):
 
     else:                   # standby is off
         display_device.contrast(200)
-        sleep_time = 1 / 60
+        sleep_time = 1 / CONST.FPS
 
-        virtual.remove_hotspot(standby_viewport, (0, 0))
+        try:
+            virtual.remove_hotspot(standby_viewport, (0, 0)) # ValueError: list.remove(x): x not in list
+        except ValueError as e:
+            print(e)
 
         current_rendered_main['next'] = time.time()
         top_viewport = snapshot(256, 16, top_snap, 60.0)

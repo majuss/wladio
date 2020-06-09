@@ -12,7 +12,7 @@ import time
 import subprocess
 import RPi.GPIO as GPIO
 
-import constants
+import constants as CONST
 import utils as utils
 import display as display
 import sensors_dummy as sensors
@@ -27,7 +27,6 @@ logger.setLevel(logging.DEBUG)
 
 GPIO.setmode(GPIO.BCM)
 
-FRAMES = constants.FPS
 
 # Load stations and music library file
 stations, music_lib = utils.openFiles()
@@ -81,13 +80,13 @@ def setup_buttons(next_btn, prev_btn, pause_btn, garage_door, driveway, unknown,
         global playback_mode
         global power_last
 
-        if time.time() - power_last < 2:
-            print('power button pressed < 2 secs')
-            return
+        # if time.time() - power_last < 2:
+        #     print('power button pressed < 2 secs')
+        #     return
 
-        power_last = time.time()
+        # power_last = time.time()
 
-        sleep(0.1)
+        sleep(0.01)
         player = get_current_player()
 
         print('GPIO')
@@ -351,7 +350,7 @@ def rfid_handler():
     global cdPlayer
 
     cdPlayer = mpv.MPV(loop_playlist='inf')
-    cdPlayer.volume = constants.CD_PLAYER_START_VOL
+    cdPlayer.volume = CONST.CD_PLAYER_START_VOL
 
     last_stop = 0
 
@@ -377,7 +376,7 @@ def rfid_handler():
                         if time.time() - last_stop > 60:
                             cdPlayer.pause = False
                             cdPlayer.play(
-                                constants.MUSIC_LIB_PATH + music_lib[rfid])
+                                CONST.MUSIC_LIB_PATH + music_lib[rfid])
                             logger.debug(
                                 "CD Player started fresh with playlist: {}".format(cdPlayer.playlist))
                         else:
@@ -475,7 +474,7 @@ def setup_radio(player, stations):
 rdr = RFID()
 sockid = lirc.init("radio", blocking=True)
 radioPlayer = mpv.MPV()
-radioPlayer.volume = constants.RADIO_PLAYER_START_VOL
+radioPlayer.volume = CONST.RADIO_PLAYER_START_VOL
 cdPlayer = ''
 
 playback_mode = PlaybackMode.Radio
