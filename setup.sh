@@ -21,7 +21,7 @@ sudo apt install -y lirc python-pylirc liblirc-dev
 python3 -m venv venv
 source venv/bin/activate
 pip3 install wheel cython
-pip3 install python-mpv luma.oled pi-rc522 adafruit-circuitpython-bme680 adafruit-circuitpython-bme280 adafruit-circuitpython-ads1x15 pyky040 gi
+pip3 install python-mpv luma.oled pi-rc522 adafruit-circuitpython-bme680 adafruit-circuitpython-bme280 gi
 
 
 sudo mv /etc/lirc/lircd.conf.dist /etc/lirc/lircd.conf
@@ -71,3 +71,22 @@ rm -rf python-lirc
 # set pinmode to BCM and change the PINs to BCM not Board Pins
 # set RST, IRQ an CE Pins to match documentation (16, 26, 1)
 
+# Systemd service
+# sudo nano /etc/systemd/system/wladio@pi.service
+# sudo systemctl --system daemon-reload
+# sudo systemctl enable twitch@pi
+
+
+# [Unit]
+# Description=wladio
+# After=network-online.target
+
+# [Service]
+# Type=simple
+# User=%i
+# Restart=always
+# RestartSec=5
+# ExecStart=/home/pi/wladio/venv/bin/python3 /home/pi/wladio/radio/main.py
+
+# [Install]
+# WantedBy=multi-user.target
