@@ -14,7 +14,7 @@ from luma.oled.device import ssd1322
 
 import constants
 
-import sensors_dummy
+import sensors_dummy as sensors
 
 display_device = ssd1322(spi(device=0, port=0))
 
@@ -25,7 +25,7 @@ draw_lock = threading.Condition()  # global draw lock
 stop_lock = threading.Condition()  # global stop lock
 
 stop_list = []
-frames = 60
+sleep_time = 1  # /60
 main_text_dirty = True  # main text was overdrawn
 volume_changes = False  # the volume bar is visible
 
@@ -41,6 +41,8 @@ font_28 = get_font(28)
 font_16 = get_font(16)
 font_16_seg = get_font(
     16, '../fonts-DSEG_v046/DSEG14-Classic-MINI/DSEG14ClassicMini-Regular.ttf')
+font_32_seg = get_font(
+    32, '../fonts-DSEG_v046/DSEG14-Classic-MINI/DSEG14ClassicMini-Regular.ttf')
 
 
 class DrawType(Enum):
@@ -85,7 +87,7 @@ bt_image = Image.open('ressources/bt.png').convert('RGBA')
 def top_snap(draw, width, height):
     print('draw')
     localTime = time.localtime()
-    temp_out, temp_in = sensors_dummy.get_data()
+    temp_out, temp_in = sensors.get_data()
 
     draw.text((0, 0), '{}°  {}°'.format(
         temp_out, temp_in), fill='white', font=font_16)
@@ -99,6 +101,21 @@ def top_snap(draw, width, height):
 
 
 top_viewport = snapshot(256, 16, top_snap, 60.0)
+
+
+def standby_snap(draw, width, height):
+    print('standby draw')
+    localTime = time.localtime()
+    temp_out, temp_in = sensors.get_data()
+
+    draw.text((90, 16), '{:02d}:{:02d}'.format(localTime.tm_hour, localTime.tm_min),
+              fill='white', font=font_32_seg)
+
+    # draw cloud
+    # draw bt
+
+
+standby_viewport = 0
 
 
 class Main_Hotspot(hotspot):
@@ -117,7 +134,6 @@ class Main_Hotspot(hotspot):
     def update(self, draw):
         global main_text_dirty
         global volume_changes
-        print('main')
 
         data = current_rendered_main
 
@@ -146,7 +162,6 @@ class Main_Hotspot(hotspot):
             if 0 != data['extra_size']:
                 if data['extra_size'] <= data['x']:
                     # reached end
-                    print("end reached")
                     data['x'] = 0
                     data['next'] = time.time() + 2
 
@@ -208,6 +223,8 @@ def main_text(text):
         print(volume_changes, main_text_dirty, 'same text and dirty false')
         return
 
+    print('set main text to', text)
+
     current_rendered_main = make_text_dict(text, 0)
     main_text_dirty = True
 
@@ -216,7 +233,7 @@ def tag_text(text):
     global current_rendered_main
 
     if volume_changes == True or (main_text_dirty == False and current_rendered_main['text'] == text):
-        print(volume_changes, main_text_dirty, 'same text and dirty false')
+        # print(volume_changes, main_text_dirty, 'same text and dirty false')
         return
 
     current_rendered_main = make_text_dict(text, 0)
@@ -281,49 +298,56 @@ def set_bt_status(onoff):
     virtual.add_hotspot(top_viewport, (0, 0))
 
 
-def test_func():
-    while True:
-        t_sleep(1/60)
+# todo: implement
+def set_weather_status(onoff):
+    return
+
+
+def set_standby_onoff(onoff):
+    global sleep_time
+    global top_viewport
+    global main_viewport
+    global standby_viewport
+    global test_thread
+
+    if True == onoff:  # standby is on
+        display_device.contrast(10)
+        sleep_time = 60
+
+        virtual.remove_hotspot(top_viewport, (0, 0))
+        virtual.remove_hotspot(main_viewport, (0, 64 - 29))
+
+        standby_viewport = snapshot(256, 64, standby_snap, 60)
+        virtual.add_hotspot(standby_viewport, (0, 0))
+        t_sleep(1)
         virtual.refresh()
 
+    else:                   # standby is off
+        display_device.contrast(200)
+        sleep_time = 1 / 60
 
-test_trhead = threading.Thread(target=test_func)
-test_trhead.start()  # for debugging
+        virtual.remove_hotspot(standby_viewport, (0, 0))
+
+        current_rendered_main['next'] = time.time()
+        top_viewport = snapshot(256, 16, top_snap, 60.0)
+        virtual.add_hotspot(top_viewport, (0, 0))
+        virtual.add_hotspot(main_viewport, (0, 64 - 29))
+        virtual.refresh()
+        test_thread.name = 'stop'
+
+        test_thread = threading.Thread(target=test_func)
+        test_thread.name = 'run'
+        test_thread.start()
 
 
-def display_loop():
-    while True:
-        now = time.time()
-        try:
-            latestItem = toDisplay[-1]
-        except Exception as e:
-            print(e)
-        if latestItem['timeout'] < now:
-            print("popped " + toDisplay[-1]['text'])
-            toDisplay.pop()
-            continue
+def test_func():
+    t = threading.current_thread()
+    while t.name == 'run':
+        virtual.refresh()
+        t_sleep(sleep_time)
+    print('thread end')
 
-        # render text
-        # print('would print at', latestItem['x'], latestItem['y'], latestItem['text'])
 
-        with canvas(virtual) as draw:
-            draw.text((-latestItem['x'], latestItem['y']),
-                      latestItem['text'], fill='white', font=latestItem['font'])
-
-        # recalc position for next step
-        if latestItem['x'] == latestItem['extra_size']:
-            # reached end
-            t_sleep(1)
-            print("end reached")
-            latestItem['x'] = 0
-
-        elif 0 != latestItem['extra_size']:
-            if 0 == latestItem['x']:
-                t_sleep(1)
-            else:
-                t_sleep(1/frames)
-            latestItem['x'] += 1
-
-        elif 0 == latestItem['x']:
-            t_sleep(0.5)
-        print(len(toDisplay))
+test_thread = threading.Thread(target=test_func)
+test_thread.name = 'run'
+test_thread.start()
