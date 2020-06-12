@@ -74,7 +74,7 @@ rm -rf python-lirc
 # Systemd service
 # sudo nano /etc/systemd/system/wladio@pi.service
 # sudo systemctl --system daemon-reload
-# sudo systemctl enable twitch@pi
+# sudo systemctl enable wladio@pi
 
 
 # [Unit]

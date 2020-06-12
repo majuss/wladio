@@ -1,6 +1,11 @@
 # wladio
 Building a WIFI radio based on a Raspberry Pi
 
+## Known Bugs
+- während vol balken da ist, kein senderwechsel keine pause über IR möglich
+- vol rect retain time nach CONST
+- wenn RFID Karte während des startens draufliegt = display 1 FPS standby ähnliches verhalten
+- Beim start standby button überprüfen und entsprechend initialisieren
 
 ## Audio
 

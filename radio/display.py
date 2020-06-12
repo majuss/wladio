@@ -21,16 +21,13 @@ display_device = ssd1322(spi(device=0, port=0))
 virtual = viewport(display_device, width=display_device.width,
                    height=display_device.height)
 
-draw_lock = threading.Condition()  # global draw lock
-stop_lock = threading.Condition()  # global stop lock
 
-stop_list = []
-sleep_time = CONST.FPS  # /60
+sleep_time = 1/CONST.FPS
 main_text_dirty = True  # main text was overdrawn
 volume_changes = False  # the volume bar is visible
 
-bluetooth_icon = False
-weather_icon = False
+show_bluetooth_icon = False
+show_weather_icon = False
 
 
 def get_font(font_size, font_path='ressources/hel_new.otf'):
@@ -94,9 +91,9 @@ def top_snap(draw, width, height):
     draw.text((100, 0), '{:02d}:{:02d}'.format(localTime.tm_hour, localTime.tm_min),
               fill='white', font=font_16_seg)
 
-    if (weather_icon):
+    if (show_weather_icon):
         draw.bitmap((255 - 16, 1), cloud_image)
-    if (bluetooth_icon):
+    if (show_bluetooth_icon):
         draw.bitmap((255-32-5, 0), bt_image)
 
 
@@ -190,27 +187,6 @@ def get_viewport():
     return virtual
 
 
-def renderer(obj):
-    global obj_main_text
-    global main_text_dirty
-
-    if 0 != obj['data']['timeout']:
-        def timeout(obj):
-            t_sleep(obj['data']['timeout'])
-            with stop_lock:
-                print(obj['stop'])
-                if True == obj['stop']:
-                    return
-
-            # switch back to main text
-            main_text(obj_main_text['data']['text'])
-
-        timeout_thread = threading.Thread(target=timeout, kwargs={'obj': obj})
-        timeout_thread.start()
-
-    data = obj['data']
-
-
 obj_main_text = {}
 obj_overlay_text = {}
 
@@ -239,32 +215,6 @@ def tag_text(text):
     current_rendered_main = make_text_dict(text, 0)
 
 
-def overlay_text(text, timeout):
-    return
-
-    with stop_lock:
-        print('overlay_text', text, timeout)
-        global stop_list
-        global obj_overlay_text
-        global main_text_dirty
-
-        for obj in stop_list:
-            obj['stop'] = True
-
-        text_dict = make_text_dict(text, timeout)
-
-        obj_overlay_text = {
-            'data': text_dict,
-            'stop': False
-        }
-        stop_list = [obj_overlay_text]
-
-        main_text_dirty = True
-        obj_overlay_text['thread'] = threading.Thread(
-            target=renderer, kwargs={'obj': obj_overlay_text})
-        obj_overlay_text['thread'].start()
-
-
 def overlay_rect(x, timeout=2):
     global current_rendered_main
     global main_text_dirty
@@ -283,13 +233,10 @@ def overlay_rect(x, timeout=2):
     volume_changes = True
 
 
-def set_bt_status(onoff):
-    global bluetooth_icon
+def _hard_refresh_top_viewport():
     global virtual
     global top_viewport
     global top_snap
-
-    bluetooth_icon = onoff
 
     new_top_viewport = snapshot(256, 16, top_snap, 60.0)
     virtual.remove_hotspot(top_viewport, (0, 0))
@@ -298,9 +245,16 @@ def set_bt_status(onoff):
     virtual.add_hotspot(top_viewport, (0, 0))
 
 
-# todo: implement
+def set_bt_status(onoff):
+    global show_bluetooth_icon
+    show_bluetooth_icon = onoff
+    _hard_refresh_top_viewport()
+
+
 def set_weather_status(onoff):
-    return
+    global show_weather_icon
+    show_weather_icon = onoff
+    _hard_refresh_top_viewport()
 
 
 def set_standby_onoff(onoff):
@@ -327,7 +281,8 @@ def set_standby_onoff(onoff):
         sleep_time = 1 / CONST.FPS
 
         try:
-            virtual.remove_hotspot(standby_viewport, (0, 0)) # ValueError: list.remove(x): x not in list
+            # ValueError: list.remove(x): x not in list
+            virtual.remove_hotspot(standby_viewport, (0, 0))
         except ValueError as e:
             print(e)
 
@@ -336,21 +291,21 @@ def set_standby_onoff(onoff):
         virtual.add_hotspot(top_viewport, (0, 0))
         virtual.add_hotspot(main_viewport, (0, 64 - 29))
         virtual.refresh()
-        test_thread.name = 'stop'
+        viewport_thread.name = 'stop'  # trigger stop for old thread
 
-        test_thread = threading.Thread(target=test_func)
-        test_thread.name = 'run'
-        test_thread.start()
+        viewport_thread = threading.Thread(target=viewport_loop)
+        viewport_thread.name = 'run'
+        viewport_thread.start()
 
 
-def test_func():
+def viewport_loop():
     t = threading.current_thread()
     while t.name == 'run':
         virtual.refresh()
         t_sleep(sleep_time)
-    print('thread end')
+    print('viewport thread ended')
 
 
-test_thread = threading.Thread(target=test_func)
-test_thread.name = 'run'
-test_thread.start()
+viewport_thread = threading.Thread(target=viewport_loop)
+viewport_thread.name = 'run'
+viewport_thread.start()
