@@ -80,11 +80,11 @@ def setup_buttons(next_btn, prev_btn, pause_btn, garage_door, driveway, unknown,
         global playback_mode
         global power_last
 
-        # if time.time() - power_last < 2:
-        #     print('power button pressed < 2 secs')
-        #     return
+        if time.time() - power_last < 2:
+            print('power button pressed < 2 secs')
+            return
 
-        # power_last = time.time()
+        power_last = time.time()
 
         sleep(0.01)
         player = get_current_player()
@@ -102,13 +102,11 @@ def setup_buttons(next_btn, prev_btn, pause_btn, garage_door, driveway, unknown,
             logger.debug("player resumed")
         else:  # sandby is ON
             try:
-                print('set main text')
-                # display.main_text('standby')
-                # if playback_mode == PlaybackMode.Radio:
-                #     player.stop = True
-                # if playback_mode == PlaybackMode.CD:
-                #     player.pause = True
-                print('setted main text')
+                print('stop radio / cd')
+                if playback_mode == PlaybackMode.Radio:
+                    player.stop = True
+                if playback_mode == PlaybackMode.CD:
+                    player.pause = True
                 display.set_standby_onoff(True)
                 subprocess.call(["rfkill", "block", "bluetooth"])
                 logger.debug("player stopped")
@@ -187,13 +185,12 @@ def get_current_player():
 
 
 def print_tags():
-    last_tag = ''
     global playback_mode
 
     while True:
         sleep(1)
 
-        if playback_mode == PlaybackMode.Radio:
+        if playback_mode is PlaybackMode.Radio:
             try:
                 if radioPlayer.metadata is not None and 'icy-title' in radioPlayer.metadata:  # soemtimes buggy
                     station = get_station_obj(
@@ -370,10 +367,13 @@ def rfid_handler():
                     last_time_tag_detected = True
 
                     if playback_mode != PlaybackMode.CD:
+                        # TODO: disconnect all bt devices
 
                         radioPlayer.mute = True
 
-                        if time.time() - last_stop > 60:
+                        diff = time.time() - last_stop  # time since tag was removed
+
+                        if 60 < diff:  # restart cd playback
                             cdPlayer.pause = False
                             cdPlayer.play(
                                 CONST.MUSIC_LIB_PATH + music_lib[rfid])
@@ -508,17 +508,17 @@ bt_thread.start()
 
 
 def test_func_vol():
-    sleep(3)
+    sleep(10)
 
-    display.set_standby_onoff(True)
+    print('set volume')
+    volume_change(2)
 
-    sleep(5)
-
-    display.set_standby_onoff(False)
+    sleep(0.5)
+    player_playlist_next(get_current_player())
 
 
 test_thread = threading.Thread(target=test_func_vol)
-# test_thread.start()  # for debugging
+test_thread.start()  # for debugging
 
 
 logger.debug("Init done")
