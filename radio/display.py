@@ -2,18 +2,15 @@ import time
 import math
 import threading
 
-
 from enum import Enum
 from time import sleep as t_sleep
 from PIL import ImageFont, Image
 
 from luma.core.interface.serial import spi
-from luma.core.render import canvas
 from luma.core.virtual import viewport, snapshot, hotspot
 from luma.oled.device import ssd1322
 
 import constants as CONST
-
 import sensors_dummy as sensors
 
 display_device = ssd1322(spi(device=0, port=0))
@@ -195,7 +192,7 @@ def main_text(text):
     global current_rendered_main
     global main_text_dirty
 
-    if main_text_dirty == False and current_rendered_main['text'] == text:
+    if not main_text_dirty and current_rendered_main['text'] is text:
         print(volume_changes, main_text_dirty, 'same text and dirty false')
         return
 
@@ -208,7 +205,7 @@ def main_text(text):
 def tag_text(text):
     global current_rendered_main
 
-    if volume_changes == True or (main_text_dirty == False and current_rendered_main['text'] == text):
+    if volume_changes or (not main_text_dirty and current_rendered_main['text'] is text):
         # print(volume_changes, main_text_dirty, 'same text and dirty false')
         return
 
@@ -264,7 +261,7 @@ def set_standby_onoff(onoff):
     global standby_viewport
     global test_thread
 
-    if True == onoff:  # standby is on
+    if onoff:  # standby is on
         display_device.contrast(10)
         sleep_time = 60
 
@@ -296,6 +293,13 @@ def set_standby_onoff(onoff):
         viewport_thread = threading.Thread(target=viewport_loop)
         viewport_thread.name = 'run'
         viewport_thread.start()
+
+# Traceback (most recent call last):
+#   File "main.py", line 98, in callback_power
+#     display.set_standby_onoff(False)
+#   File "/home/pi/wladio/radio/display.py", line 292, in set_standby_onoff
+#     viewport_thread.name = 'stop'  # trigger stop for old thread
+# UnboundLocalError: local variable 'viewport_thread' referenced before assignment
 
 
 def viewport_loop():
