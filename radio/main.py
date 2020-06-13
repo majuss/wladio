@@ -39,20 +39,20 @@ class PlaybackMode(Enum):
 power_last = 0  # when was power button last pressed?
 
 
-def setup_buttons(next_btn, prev_btn, pause_btn, garage_door, driveway, unknown, power, vol_clk, vol_dt, vol_sw):
+def setup_buttons(BUTTON_MAPPING):
 
-    GPIO.setup(next_btn, GPIO.IN, GPIO.PUD_UP)
-    GPIO.setup(prev_btn, GPIO.IN, GPIO.PUD_UP)
-    GPIO.setup(pause_btn, GPIO.IN, GPIO.PUD_UP)
-    GPIO.setup(garage_door, GPIO.IN, GPIO.PUD_UP)
-    GPIO.setup(driveway, GPIO.IN, GPIO.PUD_UP)
-    GPIO.setup(unknown, GPIO.IN, GPIO.PUD_UP)
+    GPIO.setup(BUTTON_MAPPING['next_btn'], GPIO.IN, GPIO.PUD_UP)
+    GPIO.setup(BUTTON_MAPPING['prev_btn'], GPIO.IN, GPIO.PUD_UP)
+    GPIO.setup(BUTTON_MAPPING['pause_btn'], GPIO.IN, GPIO.PUD_UP)
+    GPIO.setup(BUTTON_MAPPING['garage_door'], GPIO.IN, GPIO.PUD_UP)
+    GPIO.setup(BUTTON_MAPPING['driveway'], GPIO.IN, GPIO.PUD_UP)
+    GPIO.setup(BUTTON_MAPPING['unknown'], GPIO.IN, GPIO.PUD_UP)
 
-    GPIO.setup(power, GPIO.IN, GPIO.PUD_DOWN)
+    GPIO.setup(BUTTON_MAPPING['power'], GPIO.IN, GPIO.PUD_DOWN)
 
-    GPIO.setup(vol_clk, GPIO.IN, GPIO.PUD_DOWN)
-    GPIO.setup(vol_dt, GPIO.IN, GPIO.PUD_DOWN)
-    GPIO.setup(vol_sw, GPIO.IN, GPIO.PUD_UP)
+    GPIO.setup(BUTTON_MAPPING['vol_clk'], GPIO.IN, GPIO.PUD_DOWN)
+    GPIO.setup(BUTTON_MAPPING['vol_dt'], GPIO.IN, GPIO.PUD_DOWN)
+    GPIO.setup(BUTTON_MAPPING['vol_sw'], GPIO.IN, GPIO.PUD_UP)
 
     def callback_next_btn(channel):
         print('NEXT BTN')
@@ -87,10 +87,9 @@ def setup_buttons(next_btn, prev_btn, pause_btn, garage_door, driveway, unknown,
         sleep(0.01)
         player = get_current_player()
 
-        print('GPIO')
-        print(GPIO.input(channel))
+        logger.debug('Power state set to: {}'.format(GPIO.input(channel)))
 
-        if GPIO.input(channel):  # standby is ON
+        if GPIO.input(channel):  # standby is off GPIO is HIGH
             if playback_mode == PlaybackMode.Radio:
                 player.pause = False
             if playback_mode == PlaybackMode.CD:
@@ -98,9 +97,8 @@ def setup_buttons(next_btn, prev_btn, pause_btn, garage_door, driveway, unknown,
             display.set_standby_onoff(False)
             subprocess.call(["rfkill", "unblock", "bluetooth"])
             logger.debug("player resumed")
-        else:  # sandby is ON
+        else:  # standby is ON GPIO is LOW
             try:
-                print('stop radio / cd')
                 if playback_mode == PlaybackMode.Radio:
                     player.stop = True
                 if playback_mode == PlaybackMode.CD:
@@ -108,22 +106,21 @@ def setup_buttons(next_btn, prev_btn, pause_btn, garage_door, driveway, unknown,
                 display.set_standby_onoff(True)
                 subprocess.call(["rfkill", "block", "bluetooth"])
                 logger.debug("player stopped")
-            except Exception as val:
-                print('failed')
-                print(val)
-
+            except Exception as e:
+                logger.warning('Set power state failed {}'.format(e))
+        # 2020-06-13 19:20:16,369 WARNING Set power state failed list.remove(x): x not in list
     direction = True
     clk_last = 0
     clk_current = 0
-    clk_last = GPIO.input(vol_clk)
+    clk_last = GPIO.input(BUTTON_MAPPING['vol_clk'])
 
     def callback_vol(null):
         global clk_current
         global direction
 
-        clk_current = GPIO.input(vol_clk)
+        clk_current = GPIO.input(BUTTON_MAPPING['vol_clk'])
         if clk_current != clk_last:
-            if GPIO.input(vol_dt) != clk_current:
+            if GPIO.input(BUTTON_MAPPING['vol_dt']) != clk_current:
                 direction = True
             else:
                 direction = False
@@ -135,25 +132,25 @@ def setup_buttons(next_btn, prev_btn, pause_btn, garage_door, driveway, unknown,
     def callback_vol_sw(null):
         volume_mute_toggle()  # volume mute toggle
 
-    GPIO.add_event_detect(next_btn, GPIO.FALLING,
+    GPIO.add_event_detect(BUTTON_MAPPING['next_btn'], GPIO.FALLING,
                           callback=callback_next_btn, bouncetime=350)
-    GPIO.add_event_detect(prev_btn, GPIO.FALLING,
+    GPIO.add_event_detect(BUTTON_MAPPING['prev_btn'], GPIO.FALLING,
                           callback=callback_prev_btn, bouncetime=350)
-    GPIO.add_event_detect(pause_btn, GPIO.FALLING,
+    GPIO.add_event_detect(BUTTON_MAPPING['pause_btn'], GPIO.FALLING,
                           callback=callback_pause_btn, bouncetime=350)
-    GPIO.add_event_detect(garage_door, GPIO.FALLING,
+    GPIO.add_event_detect(BUTTON_MAPPING['garage_door'], GPIO.FALLING,
                           callback=callback_garage_door, bouncetime=350)
-    GPIO.add_event_detect(driveway, GPIO.FALLING,
+    GPIO.add_event_detect(BUTTON_MAPPING['driveway'], GPIO.FALLING,
                           callback=callback_driveway, bouncetime=350)
-    GPIO.add_event_detect(unknown, GPIO.FALLING,
+    GPIO.add_event_detect(BUTTON_MAPPING['unknown'], GPIO.FALLING,
                           callback=callback_unknown, bouncetime=350)
 
     GPIO.add_event_detect(
-        power, GPIO.BOTH, callback=callback_power, bouncetime=250)
+        BUTTON_MAPPING['power'], GPIO.BOTH, callback=callback_power, bouncetime=250)
 
-    GPIO.add_event_detect(vol_clk, GPIO.BOTH,
+    GPIO.add_event_detect(BUTTON_MAPPING['vol_clk'], GPIO.BOTH,
                           callback=callback_vol, bouncetime=1)
-    GPIO.add_event_detect(vol_sw, GPIO.FALLING,
+    GPIO.add_event_detect(BUTTON_MAPPING['vol_sw'], GPIO.FALLING,
                           callback=callback_vol_sw, bouncetime=350)
 
 
@@ -232,26 +229,9 @@ def print_tags():
 
 
 def infrared_handler():
-    # import pulseio
-    # import adafruit_irremote
-
-    # pulses = pulseio.PulseIn(22, maxlen=200, idle_state=False)
-    # decoder = adafruit_irremote.GenericDecode()
-
-    # while True:
-    #     # pulse = decoder.read_pulses(pulses)
-    #     # print(pulse)
-    #     try:
-    #         for pulse in pulses:
-    #             print(pulse)
-    #     except Exception as e:
-    #         print(e)
-
-    #     sleep(0.1)
-
+    global playback_mode
     lastCode = ''
     last_prev = 0
-    global playback_mode
 
     while True:
         player = get_current_player()
@@ -305,15 +285,14 @@ def bt_handler():
                 if changed["Connected"]:
                     volume_mute()
                     playback_mode = PlaybackMode.BT
-                    print('SET MODE TO BT')
+                    logger.debug('Radio mode set to Bluetooth')
                     display.set_bt_status(True)
                 else:
-                    print('SET MODE TO RADIO')
+                    logger.debug('Radio mode set to Radio')
                     playback_mode = PlaybackMode.Radio
                     volume_unmute()
                     display.set_bt_status(False)
         elif iface == "MediaPlayer1":
-            print(changed)
             if "Track" in changed:
                 track = changed['Track']
                 txt = []
@@ -468,7 +447,7 @@ def setup_radio(player, stations):
 
     for station in stations:
         player.playlist_append(stations[station]['url'])
-    player.playlist_pos = 0
+    player.playlist_pos = CONST.RADIO_INIT_STATION
 
 
 rdr = RFID()
@@ -476,21 +455,12 @@ sockid = lirc.init("radio", blocking=True)
 radioPlayer = mpv.MPV()
 radioPlayer.volume = CONST.RADIO_PLAYER_START_VOL
 cdPlayer = ''
+subprocess.call(["bluetoothctl", "discoverable", "on"])
+subprocess.call(["bluetoothctl", "pairable", "on"])
 
 playback_mode = PlaybackMode.Radio
 
-setup_buttons(
-    4,  # next_btn
-    12,  # prev_btn
-    19,  # pause_btn
-    20,  # garage_door
-    21,  # driveway
-    27,  # unknown
-    23,  # power
-    5,  # vol clock
-    6,  # vol dt
-    13,  # vol sw
-)
+setup_buttons(CONST.BUTTON_MAPPING)
 
 setup_radio(radioPlayer, stations)
 
@@ -520,8 +490,6 @@ def test_func_vol():
 test_thread = threading.Thread(target=test_func_vol)
 test_thread.start()  # for debugging
 
-
 logger.debug("Init done")
-sleep(2)
 
 sys.exit(0)

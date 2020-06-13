@@ -1,17 +1,42 @@
+# Timing based constants
 FPS = 60
-MUSIC_LIB_PATH = '/home/pi/'
-STATIONS_FILE = 'stations.json'
-MUSIC_LIB_FILE = 'music_lib.json'
-CD_PLAYER_START_VOL = 30
-RADIO_PLAYER_START_VOL = 25
-
+RECT_TIMEOUT = 1
+SCROLL_RETAIN = 2
 VOL_KNOB_SPEED = 2
 SCROLL_SPEED = 3
 
+#Pathes and files
+MUSIC_LIB_PATH = '/home/pi/'
+STATIONS_FILE = 'stations.json'
+MUSIC_LIB_FILE = 'music_lib.json'
+
+# Player controls
+CD_PLAYER_START_VOL = 30
+RADIO_PLAYER_START_VOL = 25
+RADIO_INIT_STATION = 0
+
+# Display controls
+BRIGHTNESS_STANDBY = 10
+BRIGHTNESS = 255
+
+# GPIO
+BUTTON_MAPPING = {
+    'next_btn': 4,
+    'prev_btn': 12,
+    'pause_btn': 19,
+    'garage_door': 20,
+    'driveway': 21,
+    'unknown': 27,
+    'power': 23,
+    'vol_clk': 5,
+    'vol_dt': 6,
+    'vol_sw': 13,
+}
+
+# Weather
 LAT = "52.360550"
 LONG = "14.062827"
 ELEV = "10"
-
 PREC_THRESHOLD = 1
 PREC_SUM_THRESHOLD = 2
 
