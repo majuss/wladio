@@ -19,7 +19,7 @@ virtual = viewport(display_device, width=display_device.width,
                    height=display_device.height)
 
 
-sleep_time = 1/CONST.FPS
+sleep_time = 1 / CONST.FPS
 main_text_dirty = True  # main text was overdrawn
 volume_changes = False  # the volume bar is visible
 
@@ -157,10 +157,10 @@ class Main_Hotspot(hotspot):
                 if data['extra_size'] <= data['x']:
                     # reached end
                     data['x'] = 0
-                    data['next'] = time.time() + 2
+                    data['next'] = time.time() + CONST.SCROLL_RETAIN
 
                 elif 0 == data['x']:
-                    data['next'] = time.time() + 2
+                    data['next'] = time.time() + CONST.SCROLL_RETAIN
                     data['x'] += CONST.SCROLL_SPEED
 
                 else:
@@ -192,7 +192,7 @@ def main_text(text):
     global current_rendered_main
     global main_text_dirty
 
-    if not main_text_dirty and current_rendered_main['text'] is text:
+    if current_rendered_main['text'] is text and not main_text_dirty:
         print(volume_changes, main_text_dirty, 'same text and dirty false')
         return
 
@@ -205,14 +205,14 @@ def main_text(text):
 def tag_text(text):
     global current_rendered_main
 
-    if volume_changes or (not main_text_dirty and current_rendered_main['text'] is text):
+    if volume_changes or (current_rendered_main['text'] == text and not main_text_dirty):
         # print(volume_changes, main_text_dirty, 'same text and dirty false')
         return
 
     current_rendered_main = make_text_dict(text, 0)
 
 
-def overlay_rect(x, timeout=2):
+def overlay_rect(x, timeout=CONST.RECT_TIMEOUT):
     global current_rendered_main
     global main_text_dirty
     global volume_changes
@@ -222,7 +222,7 @@ def overlay_rect(x, timeout=2):
     current_rendered_main = {
         'type': DrawType.Rect,
         'x': x,
-        'next': time.time() + 2,
+        'next': time.time() + CONST.RECT_TIMEOUT,
         'text': 'rect_' + str(time.time())
     }
 
@@ -260,9 +260,10 @@ def set_standby_onoff(onoff):
     global main_viewport
     global standby_viewport
     global test_thread
+    global viewport_thread
 
     if onoff:  # standby is on
-        display_device.contrast(10)
+        display_device.contrast(CONST.BRIGHTNESS_STANDBY)
         sleep_time = 60
 
         virtual.remove_hotspot(top_viewport, (0, 0))
@@ -273,8 +274,8 @@ def set_standby_onoff(onoff):
         t_sleep(1)
         virtual.refresh()
 
-    else:                   # standby is off
-        display_device.contrast(200)
+    else:  # standby is off
+        display_device.contrast(CONST.BRIGHTNESS)
         sleep_time = 1 / CONST.FPS
 
         try:
@@ -307,7 +308,7 @@ def viewport_loop():
     while t.name == 'run':
         virtual.refresh()
         t_sleep(sleep_time)
-    print('viewport thread ended')
+    # logger.info('Viewport thread ended')
 
 
 viewport_thread = threading.Thread(target=viewport_loop)
