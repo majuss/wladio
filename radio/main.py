@@ -6,7 +6,6 @@ import mpv
 import threading
 import sys
 import lirc
-import math
 import logging
 import time
 import subprocess
@@ -15,7 +14,6 @@ import RPi.GPIO as GPIO
 import constants as CONST
 import utils as utils
 import display as display
-import sensors_dummy as sensors
 
 # create logger
 logger = logging.getLogger('radio')
@@ -120,6 +118,9 @@ def setup_buttons(next_btn, prev_btn, pause_btn, garage_door, driveway, unknown,
     clk_last = GPIO.input(vol_clk)
 
     def callback_vol(null):
+        global clk_current
+        global direction
+
         clk_current = GPIO.input(vol_clk)
         if clk_current != clk_last:
             if GPIO.input(vol_dt) != clk_current:
@@ -127,9 +128,9 @@ def setup_buttons(next_btn, prev_btn, pause_btn, garage_door, driveway, unknown,
             else:
                 direction = False
             if direction:
-                volume_change(1)  # volume change up
+                volume_change(CONST.VOL_KNOB_SPEED)  # volume change up
             else:
-                volume_change(-1)  # volume change down
+                volume_change(-CONST.VOL_KNOB_SPEED)  # volume change down
 
     def callback_vol_sw(null):
         volume_mute_toggle()  # volume mute toggle
@@ -409,9 +410,8 @@ def rfid_handler():
 def player_playlist_prev(player):
     try:
         player.playlist_prev()
-    except:
-        # Skip to last position
-        player.playlist_pos = len(player.playlist) - 1
+    except Exception as e:
+        player.playlist_pos = len(player.playlist) - 1  # Skip to last position
     finally:
         if playback_mode == PlaybackMode.Radio:
             display.main_text(get_current_station_name(radioPlayer, stations))
@@ -420,7 +420,7 @@ def player_playlist_prev(player):
 def player_playlist_next(player):
     try:
         player.playlist_next()
-    except:
+    except Exception as e:
         print('reached end of playlist')
         player.playlist_pos = 0  # Skip to first position when end is reached
     finally:
@@ -437,7 +437,7 @@ def volume_change(amount):
         if player.volume > 100:
             player.volume = 100  # restrict to 100 .volume can go up to 999 until it throws exception
         display.overlay_rect(int(256 / 100 * player.volume), 1)
-    except:
+    except Exception as e:
         pass
         logger.debug("Volume limit reached")
 
