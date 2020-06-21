@@ -33,6 +33,7 @@ rm -rf python-lirc
 
 ## Bluetooth
 # git clone https://github.com/bluez/bluez.git
+# pactl load-module module-bluetooth-discover
 
 ### Patches
 

@@ -43,6 +43,12 @@ class DrawType(Enum):
     Text = 1
     Rect = 2
 
+class WorkingState(Enum):
+    Standby = 1
+    Powered = 2
+
+g_working_state = WorkingState.Powered
+
 
 def make_text_dict(text, timeout=0, font_size=28):
     (width, height) = font_28.getsize(text)
@@ -105,11 +111,14 @@ def standby_snap(draw, width, height):
     draw.text((90, 16), '{:02d}:{:02d}'.format(localTime.tm_hour, localTime.tm_min),
               fill='white', font=font_32_seg)
 
-    # draw cloud
-    # draw bt
+    draw.text((20, 10), '{}°'.format(temp_out), fill='white', font=font_28)
+    draw.text((20, 35), '{}°'.format(temp_in), fill='white', font=font_28)
+
+    if (show_weather_icon):
+        draw.bitmap((255 - 16, 1), cloud_image)
 
 
-standby_viewport = 0
+standby_viewport = None
 
 
 class Main_Hotspot(hotspot):
@@ -251,7 +260,6 @@ def set_bt_status(onoff):
 def set_weather_status(onoff):
     global show_weather_icon
     show_weather_icon = onoff
-    _hard_refresh_top_viewport()
 
 
 def set_standby_onoff(onoff):
@@ -261,8 +269,13 @@ def set_standby_onoff(onoff):
     global standby_viewport
     global test_thread
     global viewport_thread
+    global g_working_state
 
     if onoff:  # standby is on
+        if g_working_state is WorkingState.Standby:
+            return
+        g_working_state = WorkingState.Standby
+        
         display_device.contrast(CONST.BRIGHTNESS_STANDBY)
         sleep_time = 60
 
@@ -271,7 +284,6 @@ def set_standby_onoff(onoff):
 
         top_viewport = None
         main_viewport = None
-        
 
         standby_viewport = snapshot(256, 64, standby_snap, 60)
         virtual.add_hotspot(standby_viewport, (0, 0))
@@ -279,6 +291,10 @@ def set_standby_onoff(onoff):
         virtual.refresh()
 
     else:  # standby is off
+        if g_working_state is WorkingState.Powered:
+            return
+        g_working_state = WorkingState.Powered
+
         display_device.contrast(CONST.BRIGHTNESS)
         sleep_time = 1 / CONST.FPS
 

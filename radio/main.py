@@ -14,6 +14,7 @@ import RPi.GPIO as GPIO
 import constants as CONST
 import utils as utils
 import display as display
+import weather as weather
 
 # create logger
 logger = logging.getLogger('radio')
@@ -384,6 +385,12 @@ def rfid_handler():
         rdr.cleanup()
         raise
 
+def weather_handler():
+    rain = weather.get_weather()
+    rain = True
+    display.set_weather_status(rain)
+    logger.debug("Weather set to {}".format(rain))
+    sleep(60)
 
 # C O N T R O L S START
 def player_playlist_prev(player):
@@ -476,6 +483,8 @@ rfid_thread.start()
 bt_thread = threading.Thread(target=bt_handler)
 bt_thread.start()
 
+weather_thread = threading.Thread(target=weather_handler)
+weather_thread.start()
 
 def test_func_vol():
     sleep(10)
