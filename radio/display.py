@@ -269,6 +269,10 @@ def set_standby_onoff(onoff):
         virtual.remove_hotspot(top_viewport, (0, 0))
         virtual.remove_hotspot(main_viewport, (0, 64 - 29))
 
+        top_viewport = None
+        main_viewport = None
+        
+
         standby_viewport = snapshot(256, 64, standby_snap, 60)
         virtual.add_hotspot(standby_viewport, (0, 0))
         t_sleep(1)
@@ -286,6 +290,8 @@ def set_standby_onoff(onoff):
 
         current_rendered_main['next'] = time.time()
         top_viewport = snapshot(256, 16, top_snap, 60.0)
+        main_viewport = Main_Hotspot(256, 28)
+
         virtual.add_hotspot(top_viewport, (0, 0))
         virtual.add_hotspot(main_viewport, (0, 64 - 29))
         virtual.refresh()
