@@ -1,5 +1,10 @@
 import json
+import time
+
 import constants
+
+from enums import *
+
 
 def openFiles():
     with open(constants.STATIONS_FILE) as stations_file:
@@ -9,11 +14,13 @@ def openFiles():
 
     return [stations, music_lib]
 
+
 def uid_to_num(uid):
     n = 0
     for i in range(0, 5):
         n = n * 256 + uid[i]
     return n
+
 
 def fuzzy_pulse_compare(pulse1, pulse2, fuzzyness=0.2):
     if len(pulse1) != len(pulse2):
@@ -23,3 +30,29 @@ def fuzzy_pulse_compare(pulse1, pulse2, fuzzyness=0.2):
         if abs(pulse1[i] - pulse2[i]) > threshold:
             return False
     return True
+
+
+def get_local_hours_minutes():
+    localTime = time.localtime()
+    return localTime.tm_hour, localTime.tm_min
+
+
+state_object = {
+    'muted': False,
+    'paused': True,
+
+    'power_state': PowerState.Unknown,
+
+    'last_power_button_push': 0,  # when was power button last pressed?
+
+
+    'radio_playlist_position': 0,  # TODO: has to come from config
+
+
+    'draw_bluetooth_icon': False,
+    'draw_rain_cloud_icon': False
+}
+
+
+def state():
+    return state_object

@@ -72,6 +72,8 @@ rm -rf python-lirc
 # set pinmode to BCM and change the PINs to BCM not Board Pins
 # set RST, IRQ an CE Pins to match documentation (16, 26, 1)
 
+# IN mpv.py change line ~50 `backend = CDLL(sofile)` to `backend = CDLL('/usr/local/lib/libmpv.so')`
+
 # Systemd service
 # sudo nano /etc/systemd/system/wladio@pi.service
 # sudo systemctl --system daemon-reload
