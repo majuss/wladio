@@ -1,5 +1,5 @@
 # Timing based constants
-FPS = 60
+FPS = 18
 RECT_TIMEOUT = 1
 SCROLL_RETAIN = 2
 VOL_KNOB_SPEED = 2

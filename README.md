@@ -2,10 +2,10 @@
 Building a WIFI radio based on a Raspberry Pi
 
 ## Known Bugs
-- während vol balken da ist, kein senderwechsel keine pause über IR möglich
-- vol rect retain time nach CONST
 - wenn RFID Karte während des startens draufliegt = display 1 FPS standby ähnliches verhalten
-- Beim start standby button überprüfen und entsprechend initialisieren
+- Save playlist position standby = on
+- rise volume after mute / pause and rewind for n seconds
+- when in pause or mute state, if one is changed unpause or unmute also
 
 ## Audio
 
