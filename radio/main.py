@@ -3,11 +3,10 @@ from time import sleep
 
 import mpv
 import threading
-import sys
 import lirc
-import logging
 import time
 import subprocess
+import sys
 import RPi.GPIO as GPIO
 
 import constants as CONST
@@ -16,13 +15,10 @@ import display as display
 import weather as weather
 from enums import *
 
-# create logger
-logger = logging.getLogger('radio')
-ch = logging.StreamHandler(sys.stdout)
-ch.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
+import radio as radio
 
-logger.addHandler(ch)
-logger.setLevel(logging.DEBUG)
+# create logger
+logger = utils.create_logger('main')
 
 GPIO.setmode(GPIO.BCM)
 
@@ -46,16 +42,13 @@ def setup_buttons(BUTTON_MAPPING):
     GPIO.setup(BUTTON_MAPPING['vol_sw'], GPIO.IN, GPIO.PUD_UP)
 
     def callback_next_btn(channel):
-        logger.debug('next button pressed')
-        player_playlist_next(get_current_player())
+        control_next()
 
     def callback_prev_btn(channel):
-        logger.debug('prev button pressed')
-        player_playlist_prev(get_current_player())
+        control_prev()
 
     def callback_pause_btn(channel):
-        logger.debug('pause button pressed')
-        player_toggle_play_pause(get_current_player())
+        control_pause_toggle()
 
     def callback_garage_door(channel):
         logger.debug('garage door pressed')
@@ -79,38 +72,16 @@ def setup_buttons(BUTTON_MAPPING):
         utils.state()['last_power_button_push'] = time.time()
 
         sleep(0.001)
-        player = get_current_player()
 
         logger.debug('Power state set to: {}'.format(GPIO.input(channel)))
 
         if GPIO.input(channel):  # standby is off GPIO is HIGH
-            if playback_mode == PlaybackMode.Radio:
-                player.playlist_pos = utils.state()['radio_playlist_position']
-            if playback_mode == PlaybackMode.CD:
-                player.pause = False
-
-            utils.state()['paused'] = False
-
-            display.set_standby_onoff(False)
-            subprocess.call(["rfkill", "unblock", "bluetooth"])
-            logger.debug('player resumed')
+            # leaf standby
+            control_leaf_standby()
         else:  # standby is ON GPIO is LOW
-            try:
-                if playback_mode == PlaybackMode.Radio:
-                    logger.debug('stop radio')
-                    player.command('stop', 'keep-playlist')
-                if playback_mode == PlaybackMode.CD:
-                    logger.debug('pause cd')
-                    player.pause = True
+            # enter standby
+            control_enter_standby()
 
-                utils.state()['paused'] = True
-
-                display.set_standby_onoff(True)
-                subprocess.call(["rfkill", "block", "bluetooth"])
-                logger.debug('player stopped')
-            except Exception as e:
-
-                logger.warning('Set power state failed {}'.format(e))
         # 2020-06-13 19:20:16,369 WARNING Set power state failed list.remove(x): x not in list
 
     # globals for wheel
@@ -124,19 +95,19 @@ def setup_buttons(BUTTON_MAPPING):
         global direction
 
         clk_current = GPIO.input(BUTTON_MAPPING['vol_clk'])
+        print(clk_current, GPIO.input(BUTTON_MAPPING['vol_dt']))
         if clk_current != clk_last:
-            logger.debug('wheel rotated')
             if GPIO.input(BUTTON_MAPPING['vol_dt']) != clk_current:
                 direction = True
             else:
                 direction = False
             if direction:
-                volume_change(CONST.VOL_KNOB_SPEED)  # volume change up
+                control_up(CONST.VOL_KNOB_SPEED)  # volume change up
             else:
-                volume_change(-CONST.VOL_KNOB_SPEED)  # volume change down
+                control_down(-CONST.VOL_KNOB_SPEED)  # volume change down
 
     def callback_vol_sw(null):
-        volume_mute_toggle()  # volume mute toggle
+        control_mute_toggle()  # volume mute toggle
 
     GPIO.add_event_detect(BUTTON_MAPPING['next_btn'], GPIO.FALLING,
                           callback=callback_next_btn, bouncetime=350)
@@ -171,43 +142,25 @@ def get_station_obj(station_name):
     return stations[station_name]
 
 
-def get_current_station_name(player, stations):
-    url = player.playlist[player.playlist_pos]['filename']
-    for station in stations:
-        if url == stations[station]['url']:
-            return stations[station]['name']
-    return 'NO STATION FOUND'
-
-
-def get_current_player():
-    if playback_mode == PlaybackMode.Radio:
-        return radioPlayer
-    if playback_mode == PlaybackMode.CD:
-        return cdPlayer
-
-    return None
-    # if playback_mode == playback_mode.BT:
-    #     return btPlayer
-
-
 def print_tags():
     global playback_mode
 
     while True:
         sleep(1)
 
-        if playback_mode is PlaybackMode.Radio:
+        if utils.state()['playback_mode'] is PlaybackMode.Radio:
             try:
-                if radioPlayer.metadata is not None and 'icy-title' in radioPlayer.metadata:  # soemtimes buggy
+                player = radio.get_player()
+
+                if player.metadata is not None and 'icy-title' in player.metadata:  # soemtimes buggy
                     station = get_station_obj(
-                        get_current_station(radioPlayer, stations))
-                    tag = radioPlayer.metadata['icy-title']
-                    # print('tag:  "' + tag + '"')
+                        get_current_station(player, stations))
+                    tag = player.metadata['icy-title']
+
+                    # print(tag)
 
                     if tag in station['skip_strings']:
                         tag = station['name']
-
-                    # print(tag)
 
                     display.tag_text(tag)
 
@@ -216,9 +169,9 @@ def print_tags():
                     "Couldn't run the icy_title while loop in print tags:")
                 logger.debug(e)
 
-        if playback_mode is PlaybackMode.CD:
+        if utils.state()['playback_mode'] is PlaybackMode.CD:
             try:
-                player = get_current_player()
+                player = radio.get_player()
 
                 txt = '(' + str(player.playlist_pos + 1) + \
                     '/' + str(player.playlist_count) + ')'
@@ -241,14 +194,8 @@ def print_tags():
 def infrared_handler():
     global playback_mode
     last_code = ''
-    last_prev = 0
 
     while True:
-        player = get_current_player()
-
-        if player is None:
-            continue
-
         codeIR = lirc.nextcode()  # call blocks until IR commands was received
 
         if 0 == len(codeIR):  # empty array means repeat same code as befores code
@@ -260,36 +207,22 @@ def infrared_handler():
 
         # handle IR commands
         if 'up' == code:
-            logger.debug('IR: volume up')
-            # TODO: use CONST stuff
-            volume_change(2)
+            control_up(CONST.VOLUME_CHANGE_DIFF)
 
-        elif'down' == code:
-            logger.debug('IR: volume down')
-            # TODO: use CONST stuff
-            volume_change(-2)
+        elif 'down' == code:
+            control_down(-CONST.VOLUME_CHANGE_DIFF)
 
         elif 'next' == code:
-            logger.debug('IR: next in playlist')
-            player_playlist_next(player)
+            control_next()
 
         elif 'prev' == code:
-            logger.debug('IR: prev in playlist')
-            diff_time = time.time() - last_prev
-            last_prev = time.time()
-
-            if 2 < diff_time and diff_time < 10:  # only when two button presses occure in a time frame from greater 2 and smaller 10 seconds
-                player.seek(-15)
-            elif diff_time < 2:
-                player_playlist_prev(player)
+            control_prev()
 
         elif 'menu' == code:
-            logger.debug('IR: toggle mute')
-            volume_mute_toggle()
+            control_mute_toggle()
 
         elif 'play' == code:
-            logger.debug('IR: play / pause player')
-            player_toggle_play_pause(player)
+            control_pause_toggle()
 
 
 def bt_handler():
@@ -401,7 +334,7 @@ def rfid_handler():
             #     # resume radio?
 
             if playback_mode == PlaybackMode.CD:
-                # tag was removed or track finished playing
+                # tag was removed
                 if last_time_tag_detected is False:
                     cdPlayer.pause = True
                     last_stop = time.time()
@@ -426,104 +359,102 @@ def weather_handler():
 # C O N T R O L S START
 
 
-def player_playlist_prev(player):
-    if utils.state()['radio_playlist_position'] - 1 == -1:
-        player.playlist_pos = len(player.playlist) - 1
-    else:
-        player.playlist_prev()
-
-    if playback_mode == PlaybackMode.Radio:
-        display.main_text(get_current_station_name(radioPlayer, stations))
-
-    utils.state()['radio_playlist_position'] = player.playlist_pos
+def control_up(diff):
+    logger.debug('control_up')
+    player = radio.get_player()
+    if player == None:
+        return
+    radio.up(diff)
+    display.overlay_rect(int(256 / 100 * player.volume), 1)
 
 
-def player_playlist_next(player):
-    num_playlists = len(player.playlist)
-
-    if utils.state()['radio_playlist_position'] + 1 == num_playlists:
-        player.playlist_pos = 0
-    else:
-        player.playlist_next()
-
-    if playback_mode == PlaybackMode.Radio:
-        display.main_text(get_current_station_name(radioPlayer, stations))
-
-    utils.state()['radio_playlist_position'] = player.playlist_pos
+def control_down(diff):
+    logger.debug('control_down')
+    player = radio.get_player()
+    if player == None:
+        return
+    radio.down(diff)
+    display.overlay_rect(int(256 / 100 * player.volume), 1)
 
 
-def volume_change(amount):
-    logger.debug('change volume ' + str(amount))
-    player = get_current_player()
+def control_prev():
+    logger.debug('control_prev')
+    radio.prev()
 
-    try:
-        player.volume = player.volume + amount
-        if player.volume > 100:
-            player.volume = 100  # restrict to 100 .volume can go up to 999 until it throws exception
-        display.overlay_rect(int(256 / 100 * player.volume), 1)
-    except Exception as e:
-        pass
-        logger.debug('volume limit reached')
+    display.main_text(radio.get_stream_name())
 
 
-def volume_mute_toggle():
-    player = get_current_player()
+def control_next():
+    logger.debug('control_next')
+    radio.next()
+
+    display.main_text(radio.get_stream_name())
+
+
+def control_pause_toggle():
+    logger.debug('control_pause_toggle')
+
+    player = radio.get_player()
     if player is None:
         return
 
-    player.mute = not player.mute
+    radio.pause_toggle()
 
-    utils.state()['muted'] = player.mute
-
-    if player.mute:
-        display.set_pause_or_mute_text('Lautlos')
-
-    else:
-        display.remove_pause_or_mute_text()
-
-
-def volume_unmute():
-    player = get_current_player()
-    player.mute = False
-    utils.state()['muted'] = False
-
-
-def volume_mute():
-    player = get_current_player()
-    player.mute = True
-    utils.state()['muted'] = True
-
-
-def player_toggle_play_pause(player):
-    player.pause = not player.pause
-
-    utils.state()['paused'] = player.pause
-
-    if player.pause:
+    if utils.state()['paused']:
         display.set_pause_or_mute_text('Pause')
 
     else:
         display.remove_pause_or_mute_text()
 
 
+def control_mute_toggle():
+    logger.debug('control_mute_toggle')
+
+    player = radio.get_player()
+    if player is None:
+        return
+
+    radio.mute_toggle()
+
+    if utils.state()['muted']:
+        display.set_pause_or_mute_text('Lautlos')
+
+    else:
+        display.remove_pause_or_mute_text()
+
+
+def control_enter_standby():
+    logger.debug('control_enter_standby')
+    radio.enter_standby()
+
+    try:
+        display.set_standby_onoff(True)
+        subprocess.call(["rfkill", "block", "bluetooth"])
+    except Exception as e:
+        logger.warning('Set power state failed {}'.format(e))
+
+
+def control_leaf_standby():
+    logger.debug('control_leaf_standby')
+    radio.leaf_standby()
+
+    display.set_standby_onoff(False)
+    subprocess.call(["rfkill", "unblock", "bluetooth"])
+
+
+def volume_unmute():
+    player = radio.get_player()
+    player.mute = False
+    utils.state()['muted'] = False
+
+
+def volume_mute():
+    player = radio.get_player()
+    player.mute = True
+    utils.state()['muted'] = True
+
+
 # C O N T R O L S END
-
-
-def setup_radio(player, stations):
-    player.command('stop')
-
-    for station in stations:
-        player.playlist_append(stations[station]['url'])
-
-    if utils.state()['power_state'] is PowerState.Powered:  # radio is powerd
-        player.playlist_pos = CONST.RADIO_INIT_STATION
-        utils.state()['paused'] = False
-        # TODO: which station (playlist postion should come from config)
-        player.playlist_pos = utils.state()['radio_playlist_position']
-
-    logger.debug('Init done')
-
-
 rdr = RFID()
 sockid = lirc.init("radio", blocking=True)
 radioPlayer = mpv.MPV()
@@ -553,24 +484,10 @@ weather_thread = threading.Thread(target=weather_handler)
 weather_thread.start()
 
 
-def test_func_vol():
-    sleep(10)
-
-    print('set volume')
-    volume_change(2)
-
-    sleep(0.5)
-    player_playlist_next(get_current_player())
-
-
-test_thread = threading.Thread(target=test_func_vol)
-# test_thread.start()  # for debugging
-
-
 def _set_initial_state_and_setup():
     powerState = GPIO.input(CONST.BUTTON_MAPPING['power'])
 
-    print('radio power state', powerState)
+    logger.debug('radio power state is ' + str(powerState))
 
     if powerState:  # power state on
         utils.state()['power_state'] = PowerState.Powered
@@ -578,7 +495,8 @@ def _set_initial_state_and_setup():
         utils.state()['power_state'] = PowerState.Standby
 
     display.initalize()
-    setup_radio(radioPlayer, stations)
+
+    radio.check_start()
 
 
 _set_initial_state_and_setup()

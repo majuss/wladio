@@ -1,6 +1,10 @@
 import json
 import time
 
+import logging
+import sys
+
+
 import constants
 
 from enums import *
@@ -42,6 +46,7 @@ state_object = {
     'paused': True,
 
     'power_state': PowerState.Unknown,
+    'playback_mode': PlaybackMode.Radio,
 
     'last_power_button_push': 0,  # when was power button last pressed?
 
@@ -56,3 +61,14 @@ state_object = {
 
 def state():
     return state_object
+
+
+def create_logger(name):
+    logger = logging.getLogger(name)
+    ch = logging.StreamHandler(sys.stdout)
+    ch.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
+
+    logger.addHandler(ch)
+    logger.setLevel(logging.DEBUG)
+
+    return logger
