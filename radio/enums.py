@@ -18,3 +18,5 @@ class PlaybackMode(Enum):
     Radio = 1
     CD = 2
     BT = 3
+
+    Unknown = 0xff
