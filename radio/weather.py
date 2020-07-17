@@ -1,19 +1,15 @@
+import threading
 import requests
 import xmltodict
 import datetime
 import time
-import logging
 import sys
 
 import constants as CONST
+import utils
 
 # create logger
-logger = logging.getLogger('weather')
-ch = logging.StreamHandler(sys.stdout)
-ch.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
-
-logger.addHandler(ch)
-logger.setLevel(logging.DEBUG)
+logger = utils.create_logger('weather')
 
 coordinates = {
     "lat": str(CONST.LAT),
@@ -21,13 +17,16 @@ coordinates = {
     "msl": str(CONST.ELEV),
 }
 
+
 def parse_datetime(dt_str):
     """Parse datetime."""
     return time.mktime(datetime.datetime.strptime(dt_str, "%Y-%m-%dT%H:%M:%S%z").timetuple())
 
+
 def get_weather():
     """Calls metno API for weather forecast and returns True/False depending on precipitation"""
-    r = requests.get('https://api.met.no/weatherapi/locationforecast/1.9/', params=coordinates)
+    r = requests.get(
+        'https://api.met.no/weatherapi/locationforecast/1.9/', params=coordinates)
     data = xmltodict.parse(r.text)["weatherdata"]
 
     c = 0
@@ -35,7 +34,8 @@ def get_weather():
     threshold = False
 
     for entry in data["product"]["time"]:
-        time_diff = int(parse_datetime(entry["@to"]) - parse_datetime(entry["@from"]))
+        time_diff = int(parse_datetime(
+            entry["@to"]) - parse_datetime(entry["@from"]))
         if time_diff == 3600:
             prec = float(entry['location']['precipitation']['@value'])
             if prec > CONST.PREC_THRESHOLD:
@@ -51,4 +51,37 @@ def get_weather():
     else:
         return False
 
-get_weather()
+
+# thread start stop
+weather_thread = None
+
+
+def _weather_loop():
+    t = threading.current_thread()
+    while t.name is 'run':
+        rain = get_weather()
+        rain = True
+        utils.state()['draw_rain_cloud_icon'] = rain
+        logger.debug('Weather set to {}'.format(rain))
+        time.sleep(60)
+
+
+def start_thread():
+    global weather_thread
+
+    if weather_thread is not None:
+        return
+
+    weather_thread = threading.Thread(target=_weather_loop)
+    weather_thread.name = 'run'
+    weather_thread.start()
+
+
+def stop_thread():
+    global weather_thread
+
+    if weather_thread is None:
+        return
+
+    weather_thread.name = 'stop'
+    weather_thread = None
