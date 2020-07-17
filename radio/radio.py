@@ -23,7 +23,9 @@ radioPlayer.pause = True
 radioPlayer.command('stop')
 
 
-cdPlayer = mpv.MPV()
+cdPlayer = mpv.MPV(loop_playlist='inf')
+cdPlayer.volume = CONST.CD_PLAYER_START_VOL
+
 
 # add stream urls to radio playlist
 for station in radioStations:
@@ -35,9 +37,9 @@ def check_start():
 
     if STATE['power_state'] is PowerState.Powered:  # radio is powerd
         radioPlayer.playlist_pos = STATE['radio_playlist_position']
-        radioPlayer.pause = False
+        radioPlayer.pause = radioPlayer.mute = False
 
-        STATE['paused'] = False
+        STATE['paused'] = STATE['muted'] = False
 
         logger.debug('radio playback started')
 
@@ -127,6 +129,35 @@ def mute_toggle():
         STATE['paused'] = player.pause = False
 
 
+def mute_radio():
+    radioPlayer.mute = True
+
+
+def pause_cd():
+    cdPlayer.pause = True
+
+
+def start_cd(path):
+    radioPlayer.mute = True
+
+    STATE['playback_mode'] = PlaybackMode.CD
+
+    if path is not None:
+        cdPlayer.play(path)
+
+    STATE['paused'] = STATE['muted'] = cdPlayer.pause = cdPlayer.mute = False
+
+
+def unmute_unpause_current_player():
+    logger.debug('unmute_unpause_current_player')
+
+    player = get_player()
+    if player is None:
+        return
+
+    STATE['muted'] = STATE['paused'] = player.mute = player.pause = False
+
+
 def enter_standby():
     logger.debug('enter_standby')
 
@@ -146,7 +177,7 @@ def leaf_standby():
 
     if STATE['playback_mode'] is PlaybackMode.Radio:
         radioPlayer.playlist_pos = STATE['radio_playlist_position']
-        radioPlayer.mute = False
+        radioPlayer.mute = radioPlayer.pause = False
 
     elif STATE['playback_mode'] is PlaybackMode.CD:
         cdPlayer.mute = cdPlayer.pause = False
@@ -184,6 +215,7 @@ def get_stream_name():
                 txts.append(player.metadata['title'])
             if 'artist' in player.metadata:
                 txts.append(player.metadata['artist'])
+
             txts = txt + ' ' + ' - '.join(txts)
 
             return txts
@@ -215,8 +247,7 @@ def _volume_change(amount):
 
     if new_vol < 0:
         new_vol = 0
-    elif new_vol > 100: # restrict to 100 .volume can go up to 999 until it throws exception
+    elif new_vol > 100:  # restrict to 100 .volume can go up to 999 until it throws exception
         new_vol = 100
 
     player.volume = new_vol
-
