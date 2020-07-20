@@ -8,8 +8,7 @@ import constants as CONST
 from enums import *
 
 
-logger = utils.create_logger('radio')
-
+logger = utils.create_logger(__name__)
 STATE = utils.state()
 
 
@@ -32,30 +31,18 @@ for station in radioStations:
     radioPlayer.playlist_append(radioStations[station]['url'])
 
 
-def check_start():
-    logger.debug('check_start')
-
-    if STATE['power_state'] is PowerState.Powered:  # radio is powerd
-        radioPlayer.playlist_pos = STATE['radio_playlist_position']
-        radioPlayer.pause = radioPlayer.mute = False
-
-        STATE['paused'] = STATE['muted'] = False
-
-        logger.debug('radio playback started')
-
-
 # handels
 
 def next():
     logger.debug('next')
 
     player = get_player()
-    if player == None:
+    if player is None:
         return
 
     num_playlists = len(player.playlist)
 
-    if STATE['radio_playlist_position'] + 1 == num_playlists:
+    if STATE['radio_playlist_position'] + 1 is num_playlists:
         player.playlist_pos = 0
     else:
         player.playlist_next()
@@ -72,7 +59,7 @@ def prev():
     global last_prev
 
     player = get_player()
-    if player == None:
+    if player is None:
         return
 
     diff_time = time.time() - last_prev
@@ -81,14 +68,10 @@ def prev():
     if 2 < diff_time and diff_time < 10:  # only when two button presses occure in a time frame from greater 2 and smaller 10 seconds
         player.seek(-15)
     elif diff_time < 2:
-        if STATE['radio_playlist_position'] - 1 == -1:
+        if STATE['radio_playlist_position'] - 1 is -1:
             player.playlist_pos = len(player.playlist) - 1
         else:
             player.playlist_prev()
-
-        # TODO: uncoment / display
-        # if playback_mode == PlaybackMode.Radio:
-        #    display.main_text(get_current_station_name(radioPlayer, stations))
 
         STATE['radio_playlist_position'] = player.playlist_pos
 
@@ -127,6 +110,13 @@ def mute_toggle():
 
     if player.mute is False:  # unpause if unmuted
         STATE['paused'] = player.pause = False
+
+
+def mute_radio_and_pause_cd():
+    cdPlayer.pause = True
+    radioPlayer.mute = True
+
+    STATE['muted'] = STATE['paused'] = True
 
 
 def mute_radio():
@@ -188,22 +178,22 @@ def leaf_standby():
 #############################
 # return current active player acording to state
 def get_player():
-    if STATE['playback_mode'] == PlaybackMode.Radio:
+    if STATE['playback_mode'] is PlaybackMode.Radio:
         return radioPlayer
-    if STATE['playback_mode'] == PlaybackMode.CD:
+    if STATE['playback_mode'] is PlaybackMode.CD:
         return cdPlayer
     return None
 
 
 def get_stream_name():
     player = get_player()
-    if player == None:
+    if player is None:
         return 'NO TITLE'
 
-    if STATE['playback_mode'] == PlaybackMode.Radio:
+    if STATE['playback_mode'] is PlaybackMode.Radio:
         return _get_current_station_name()
 
-    if STATE['playback_mode'] == PlaybackMode.CD:
+    if STATE['playback_mode'] is PlaybackMode.CD:
         try:
             player = get_player()
 
@@ -240,7 +230,7 @@ def _volume_change(amount):
     logger.debug('change volume ' + str(amount))
 
     player = get_player()
-    if player == None:
+    if player is None:
         return
 
     new_vol = player.volume + amount

@@ -7,14 +7,14 @@ import utils
 from enums import PlaybackMode
 
 
-logger = utils.create_logger('control')
+logger = utils.create_logger(__name__)
 STATE = utils.state()
 
 
 def control_up(diff):
     logger.debug('control_up')
     player = radio.get_player()
-    if player == None:
+    if player is None:
         return
     radio.up(diff)
     display.overlay_rect(int(256 / 100 * player.volume), 1)
@@ -23,7 +23,7 @@ def control_up(diff):
 def control_down(diff):
     logger.debug('control_down')
     player = radio.get_player()
-    if player == None:
+    if player is None:
         return
     radio.down(diff)
     display.overlay_rect(int(256 / 100 * player.volume), 1)

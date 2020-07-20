@@ -15,6 +15,9 @@ import sensors_dummy as sensors
 import utils as utils
 from enums import *
 
+logger = utils.create_logger(__name__)
+STATE = utils.state()
+
 display_device = ssd1322(spi(device=0, port=0))
 
 virtual = viewport(display_device, width=display_device.width,
@@ -39,7 +42,8 @@ font_32_seg = get_font(
 
 
 def make_text_dict(text, next=0, font_size=28, main_text=True):
-    print('make_text_dict', text, next, font_size, main_text)
+    logger.debug('make_text_dict {} {} {} {}'.format(
+        text, next, font_size, main_text))
 
     (width, height) = font_28.getsize(text)
 
@@ -73,7 +77,7 @@ bt_image = Image.open('ressources/bt.png').convert('RGBA')
 
 
 def top_snap(draw, width, height):
-    print('draw top row (temps, time, bt, weather)')
+    logger.debug('draw top row (temps, time, bt, weather)')
 
     draw.text((0, 0), '{}°  {}°'.format(
         *sensors.get_data()), fill='white', font=font_16)
@@ -81,14 +85,14 @@ def top_snap(draw, width, height):
     draw.text((100, 0), '{:02d}:{:02d}'.format(*utils.get_local_hours_minutes()),
               fill='white', font=font_16_seg)
 
-    if (utils.state()['draw_rain_cloud_icon']):
+    if STATE['draw_rain_cloud_icon']:
         draw.bitmap((255 - 16, 1), cloud_image)
-    if (utils.state()['draw_bluetooth_icon']):
+    if STATE['draw_bluetooth_icon']:
         draw.bitmap((255-32-5, 0), bt_image)
 
 
 def standby_snap(draw, width, height):
-    print('draw standby (temps, time, weather)')
+    logger.debug('draw standby (temps, time, weather)')
     temp_out, temp_in = sensors.get_data()
 
     draw.text((90, 16), '{:02d}:{:02d}'.format(*utils.get_local_hours_minutes()),
@@ -97,7 +101,7 @@ def standby_snap(draw, width, height):
     draw.text((20, 10), '{}°'.format(temp_out), fill='white', font=font_28)
     draw.text((20, 35), '{}°'.format(temp_in), fill='white', font=font_28)
 
-    if (utils.state()['draw_rain_cloud_icon']):
+    if (STATE['draw_rain_cloud_icon']):
         draw.bitmap((255 - 16, 1), cloud_image)
 
 
@@ -121,7 +125,7 @@ class Main_Hotspot(hotspot):
         # print(self._data['next'], str(time.time()), str(self._data['next'] < time.time()), str(self._data['next'] - time.time()))
 
         if update_text_line:
-            print('received update text line')
+            logger.debug('received update text line')
             return True
 
         currentTime = time.time()
@@ -132,7 +136,7 @@ class Main_Hotspot(hotspot):
 
         if current_rendered_main['main_text'] is False:
             current_rendered_main = prev_rendered_main
-            print('reset current_rendered_main to prev main')
+            logger.debug('reset current_rendered_main to prev main')
 
         # print('should_redraw True')
 
@@ -153,18 +157,8 @@ class Main_Hotspot(hotspot):
             # print('save main text')
             prev_rendered_main = data
 
-        # if utils.state()['muted']:
-        #     draw.text((0, 0), 'lautlos', fill='white', font=data['font'])
-        #     main_text_dirty = True
-        #     return
-
-        # if utils.state()['paused']:
-        #     draw.text((0, 0), 'pausiert', fill='white', font=data['font'])
-        #     main_text_dirty = True
-        #     return
-
         # draw text
-        if DrawType.Text == data['type']:
+        if DrawType.Text is data['type']:
 
             # draw text that fits completely on display
             draw.text((-data['x'], 0), data['text'],
@@ -177,7 +171,7 @@ class Main_Hotspot(hotspot):
                     data['x'] = 0
                     data['next'] = time.time() + CONST.SCROLL_RETAIN
 
-                elif 0 == data['x']:
+                elif 0 is data['x']:
                     data['next'] = time.time() + CONST.SCROLL_RETAIN
                     data['x'] += CONST.SCROLL_SPEED
 
@@ -185,7 +179,7 @@ class Main_Hotspot(hotspot):
                     data['x'] += CONST.SCROLL_SPEED
 
         # draw rectangle
-        if DrawType.Rect == data['type']:
+        if DrawType.Rect is data['type']:
             draw.rectangle((0, 0, data['x'], 64), fill='white', outline=None)
 
 
@@ -193,25 +187,11 @@ def get_viewport():
     return virtual
 
 
-# def main_text(text):
-#     global current_rendered_main
-#     global current_rendered_main
-
-#     if current_rendered_main['text'] is text and not main_text_dirty:
-#         print(volume_changes, main_text_dirty, 'same text and dirty false')
-#         return
-
-#     print('set main text to', text)
-
-#     current_rendered_main = make_text_dict(text, 0)
-#     main_text_dirty = True
-
-
 def tag_text(text):
     global current_rendered_main
     global update_text_line
 
-    if utils.state()['muted'] is True or utils.state()['paused'] is True:
+    if STATE['muted'] is True or STATE['paused'] is True:
         return
 
     if volume_changes or (current_rendered_main['text'] == text):
@@ -239,7 +219,7 @@ def overlay_rect(x, timeout=CONST.RECT_TIMEOUT):
     global volume_changes
     global update_text_line
 
-    print('overlay_rect')
+    logger.debug('overlay_rect')
 
     current_rendered_main = {
         'type': DrawType.Rect,
@@ -281,9 +261,9 @@ def set_standby_onoff(onoff):
     global viewport_thread
 
     if onoff:  # standby is on
-        if utils.state()['power_state'] is PowerState.Standby:
+        if STATE['power_state'] is PowerState.Standby:
             return
-        utils.state()['power_state'] = PowerState.Standby
+        STATE['power_state'] = PowerState.Standby
 
         display_device.contrast(CONST.BRIGHTNESS_STANDBY)
         sleep_time = 60
@@ -295,9 +275,9 @@ def set_standby_onoff(onoff):
         virtual.refresh()
 
     else:  # standby is off
-        if utils.state()['power_state'] is PowerState.Powered:
+        if STATE['power_state'] is PowerState.Powered:
             return
-        utils.state()['power_state'] = PowerState.Powered
+        STATE['power_state'] = PowerState.Powered
 
         display_device.contrast(CONST.BRIGHTNESS)
         sleep_time = 1 / CONST.FPS
@@ -369,11 +349,14 @@ def _remove_standby_viewport():
 
 
 def initalize():  # 1 PowerState.Powered / 0 PowerState.Standby
-    print('intialize radio display to state', utils.state()['power_state'])
+    logger.debug('intialize radio display to state {}'.format(
+        STATE['power_state']))
 
-    if utils.state()['power_state'] is PowerState.Powered:
+    if STATE['power_state'] is PowerState.Powered:
         _setup_state_powered()
-    elif utils.state()['power_state'] is PowerState.Standby:
+
+    elif STATE['power_state'] is PowerState.Standby:
         _setup_state_standby()
-    elif utils.state()['power_state'] is PowerState.Unknown:
-        print('POWER STATE NOT SET')
+
+    elif STATE['power_state'] is PowerState.Unknown:
+        logger.debug('POWER STATE NOT SET')

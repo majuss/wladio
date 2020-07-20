@@ -9,7 +9,7 @@ import constants as CONST
 import utils
 import radio
 
-logger = utils.create_logger('rfid')
+logger = utils.create_logger(__name__)
 STATE = utils.state()
 
 # Load stations and music library file

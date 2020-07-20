@@ -66,7 +66,8 @@ def state():
 def create_logger(name):
     logger = logging.getLogger(name)
     ch = logging.StreamHandler(sys.stdout)
-    ch.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
+    ch.setFormatter(logging.Formatter(
+        "%(asctime)s %(levelname)s %(name)s | %(message)s"))
 
     logger.addHandler(ch)
     logger.setLevel(logging.DEBUG)

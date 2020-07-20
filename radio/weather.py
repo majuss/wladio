@@ -8,8 +8,9 @@ import sys
 import constants as CONST
 import utils
 
-# create logger
-logger = utils.create_logger('weather')
+
+logger = utils.create_logger(__name__)
+STATE = utils.state()
 
 coordinates = {
     "lat": str(CONST.LAT),
@@ -36,7 +37,7 @@ def get_weather():
     for entry in data["product"]["time"]:
         time_diff = int(parse_datetime(
             entry["@to"]) - parse_datetime(entry["@from"]))
-        if time_diff == 3600:
+        if time_diff is 3600:
             prec = float(entry['location']['precipitation']['@value'])
             if prec > CONST.PREC_THRESHOLD:
                 threshold = True
@@ -61,7 +62,7 @@ def _weather_loop():
     while t.name is 'run':
         rain = get_weather()
         rain = True
-        utils.state()['draw_rain_cloud_icon'] = rain
+        STATE['draw_rain_cloud_icon'] = rain
         logger.debug('Weather set to {}'.format(rain))
         time.sleep(60)
 
