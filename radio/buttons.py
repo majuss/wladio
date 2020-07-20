@@ -8,8 +8,8 @@ import rfid
 import utils
 import constants as CONST
 
+logger = utils.create_logger(__name__)
 STATE = utils.state()
-logger = utils.create_logger('buttons')
 
 GPIO.setmode(GPIO.BCM)
 
