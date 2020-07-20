@@ -61,7 +61,7 @@ def _weather_loop():
     t = threading.current_thread()
     while t.name is 'run':
         rain = get_weather()
-        rain = True
+        rain = True # Uncomment to use real data
         STATE['draw_rain_cloud_icon'] = rain
         logger.debug('Weather set to {}'.format(rain))
         time.sleep(60)
