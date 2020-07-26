@@ -51,12 +51,31 @@ state_object = {
     'last_power_button_push': 0,  # when was power button last pressed?
 
 
-    'radio_playlist_position': 0,  # TODO: has to come from config
+    'radio_playlist_position': 0,
+    'radio_volume': 25,
 
 
     'draw_bluetooth_icon': False,
     'draw_rain_cloud_icon': False
 }
+
+try:
+    with open('radio_conf.json') as data:
+        conf = json.load(data)
+
+        state_object['radio_playlist_position'] = conf['station']
+        state_object['radio_volume'] = conf['volume']
+except:
+    pass
+
+
+def save_radio_conf():
+    try:
+        with open('radio_conf.json', 'w') as outfile:
+            json.dump({"station": state_object['radio_playlist_position'],
+                       "volume": state_object['radio_volume']}, outfile, indent=4)
+    except:
+        pass
 
 
 def state():
