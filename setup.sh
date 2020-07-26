@@ -74,22 +74,30 @@ rm -rf python-lirc
 
 # IN mpv.py change line ~50 `backend = CDLL(sofile)` to `backend = CDLL('/usr/local/lib/libmpv.so')`
 
+# setup to autologin user in console mode
+
 # Systemd service
-# sudo nano /etc/systemd/system/wladio@pi.service
-# sudo systemctl --system daemon-reload
-# sudo systemctl enable wladio@pi
+# $ systemctl --user daemon-reload
+# $ systemctl --user enable wladio@pi.service
+# # reboot or $ systemctl --user start wladio@pi.service
 
-
+# $ cat ~/.config/systemd/user/wladio@pi.service 
 # [Unit]
 # Description=wladio
-# After=network-online.target
+# After=time-sync.target
+# RestartSec=2
+# StartLimitIntervalSec=10
+# StartLimitBurst=100
+
 
 # [Service]
 # Type=simple
-# User=%i
+# TimeoutStartSec=5
+
 # Restart=always
-# RestartSec=5
-# ExecStart=/home/pi/wladio/venv/bin/python3 /home/pi/wladio/radio/main.py
+# RestartSec=10
+# ExecStart=/home/pi/wladio/venv/bin/python3 main.py
+# WorkingDirectory=/home/pi/wladio/radio
 
 # [Install]
-# WantedBy=multi-user.target
+# WantedBy=default.target

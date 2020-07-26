@@ -4,19 +4,14 @@ Building a WIFI radio based on a Raspberry Pi
 ## Must have until field test
 - radio pause buffer verwerfen nach CONST.TIME_DISCARD_RADIO_BUFFER
 - free button assign to random song
-- systemd job anpassen (sudo nano /etc/systemd/system/wladio@pi.service) (set working dir)
-- Volume und Sender speichern über Standby
 
 ## Nice to haves
 - Volume gentle rising
 - Bedienungsanleitung
 - Error handling kein Internet
+- rise volume after mute / pause and rewind for n seconds
 
 ## Known Bugs
-- wenn RFID Karte während des startens draufliegt = display 1 FPS standby ähnliches verhalten
-- Save playlist position standby = on
-- rise volume after mute / pause and rewind for n seconds
-- when in pause or mute state, if one is changed unpause or unmute also
 
 
 
