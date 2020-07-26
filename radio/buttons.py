@@ -52,7 +52,8 @@ def callback_driveway(channel):
 
 
 def callback_unknown(channel):
-    logger.debug('unknown button pressed')
+    logger.debug('random song button pressed')
+    radio.toggle_shuffle_cd()
 
 
 def callback_power(channel):

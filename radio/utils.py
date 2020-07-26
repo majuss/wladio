@@ -53,6 +53,7 @@ state_object = {
 
     'radio_playlist_position': 0,
     'radio_volume': 25,
+    'radio_last_pause':0,
 
 
     'draw_bluetooth_icon': False,
