@@ -41,7 +41,8 @@ def control_next():
     logger.debug('control_next')
     radio.next()
 
-    if STATE['playback_mode'] is PlaybackMode.Radio: # im after file track change no metadata is available
+    # im after file track change no metadata is available
+    if STATE['playback_mode'] is PlaybackMode.Radio:
         display.main_text(radio.get_stream_name())
 
 
@@ -80,6 +81,7 @@ def control_mute_toggle():
 def control_enter_standby():
     logger.debug('control_enter_standby')
     radio.enter_standby()
+    utils.save_radio_conf()
 
     try:
         display.set_standby_onoff(True)

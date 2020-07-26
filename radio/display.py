@@ -304,16 +304,14 @@ def viewport_loop():
     # logger.info('Viewport thread ended')
 
 
-viewport_thread = threading.Thread(target=viewport_loop)
-viewport_thread.name = 'run'
-viewport_thread.start()
+viewport_thread = None
 
 
 def _setup_state_powered():
     global top_viewport
     global main_viewport
 
-    top_viewport = snapshot(256, 16, top_snap, 60.0)
+    top_viewport = snapshot(256, 16, top_snap, 60)
     main_viewport = Main_Hotspot(256, 28)
 
     virtual.add_hotspot(top_viewport, (0, 0))
@@ -349,6 +347,8 @@ def _remove_standby_viewport():
 
 
 def initalize():  # 1 PowerState.Powered / 0 PowerState.Standby
+    global viewport_thread
+
     logger.debug('intialize radio display to state {}'.format(
         STATE['power_state']))
 
@@ -360,3 +360,7 @@ def initalize():  # 1 PowerState.Powered / 0 PowerState.Standby
 
     elif STATE['power_state'] is PowerState.Unknown:
         logger.debug('POWER STATE NOT SET')
+
+    viewport_thread = threading.Thread(target=viewport_loop)
+    viewport_thread.name = 'run'
+    viewport_thread.start()

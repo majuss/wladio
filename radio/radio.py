@@ -17,7 +17,7 @@ radioStations, music_lib = utils.openFiles()
 
 
 radioPlayer = mpv.MPV()
-radioPlayer.volume = CONST.RADIO_PLAYER_START_VOL
+radioPlayer.volume = STATE['radio_volume']
 radioPlayer.pause = True
 radioPlayer.command('stop')
 
@@ -241,3 +241,6 @@ def _volume_change(amount):
         new_vol = 100
 
     player.volume = new_vol
+
+    if STATE['playback_mode'] is PlaybackMode.Radio:
+        STATE['radio_volume'] = new_vol
