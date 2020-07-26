@@ -12,8 +12,7 @@ MUSIC_LIB_FILE = 'music_lib.json'
 
 # Player controls
 CD_PLAYER_START_VOL = 30
-RADIO_PLAYER_START_VOL = 25
-RADIO_INIT_STATION = 0
+RADIO_MAX_PAUSE_DIFF = 10
 VOLUME_CHANGE_DIFF = 2
 
 # Display controls

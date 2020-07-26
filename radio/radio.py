@@ -24,6 +24,7 @@ radioPlayer.command('stop')
 
 cdPlayer = mpv.MPV(loop_playlist='inf')
 cdPlayer.volume = CONST.CD_PLAYER_START_VOL
+toggle_cd = False
 
 
 # add stream urls to radio playlist
@@ -95,6 +96,8 @@ def pause_toggle():
 
     STATE['paused'] = player.pause = not player.pause
 
+    _check_radio_pause()
+
     if player.pause is False:  # unmute if unpaused
         STATE['muted'] = player.mute = False
 
@@ -110,6 +113,7 @@ def mute_toggle():
 
     if player.mute is False:  # unpause if unmuted
         STATE['paused'] = player.pause = False
+        _check_radio_pause()
 
 
 def mute_radio_and_pause_cd():
@@ -138,6 +142,20 @@ def start_cd(path):
     STATE['paused'] = STATE['muted'] = cdPlayer.pause = cdPlayer.mute = False
 
 
+def toggle_shuffle_cd():
+    if STATE['playback_mode'] is not PlaybackMode.CD:
+        return
+
+    global toggle_cd
+
+    if toggle_cd:
+        cdPlayer.command('playlist-unshuffle')
+    else:
+        cdPlayer.command('playlist-shuffle')
+
+    toggle_cd = not toggle_cd
+
+
 def unmute_unpause_current_player():
     logger.debug('unmute_unpause_current_player')
 
@@ -146,6 +164,7 @@ def unmute_unpause_current_player():
         return
 
     STATE['muted'] = STATE['paused'] = player.mute = player.pause = False
+    _check_radio_pause()
 
 
 def enter_standby():
@@ -244,3 +263,18 @@ def _volume_change(amount):
 
     if STATE['playback_mode'] is PlaybackMode.Radio:
         STATE['radio_volume'] = new_vol
+
+
+def _check_radio_pause():
+    if STATE['playback_mode'] is not PlaybackMode.Radio:
+        return
+
+    if STATE['paused']:
+        STATE['radio_last_pause'] = time.time()
+
+    if STATE['paused'] is False or STATE['muted'] is False:
+        diff = time.time() - STATE['radio_last_pause']
+
+        if CONST.RADIO_MAX_PAUSE_DIFF < diff:
+            radioPlayer.playlist_pos = STATE['radio_playlist_position']
+            print(diff)

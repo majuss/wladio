@@ -79,7 +79,7 @@ def print_tags():
                 txts = txt + ' ' + ' - '.join(txts)
 
                 display.tag_text(txts)
-                logger.debug("CD tag is : {}".format(txts))
+                # logger.debug("CD tag is : {}".format(txts))
 
             except:
                 pass
