@@ -2,8 +2,7 @@
 Building a WIFI radio based on a Raspberry Pi
 
 ## Must have until field test
-- radio pause buffer verwerfen nach CONST.TIME_DISCARD_RADIO_BUFFER
-- free button assign to random song
+
 
 ## Nice to haves
 - Volume gentle rising
@@ -12,7 +11,6 @@ Building a WIFI radio based on a Raspberry Pi
 - rise volume after mute / pause and rewind for n seconds
 
 ## Known Bugs
-
 
 
 ## Audio
