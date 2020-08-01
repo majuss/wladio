@@ -33,6 +33,15 @@
 		],
 		"replace_strings": []
 	},
+	"914": {
+		"key": "914",
+		"name": "91,4",
+		"url": "http://stream.berliner-rundfunk.de/brf/mp3-128/internetradio",
+		"skip_strings": [
+			""
+		],
+		"replace_strings": []
+	},
 	"bbc": {
 		"key": "bbc_wsn",
 		"name": "BBC WSN",
