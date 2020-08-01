@@ -16,7 +16,25 @@
 	"dlf": {
 		"key": "dlf",
 		"name": "Deutschlandfunk",
-		"url": "http://st01.dlf.de/dlf/01/128/mp3/stream.mp3",
+		"url": "https://st01.sslstream.dlf.de/dlf/01/high/aac/stream.aac",
+		"skip_strings": [
+			""
+		],
+		"replace_strings": []
+	},
+	"dlf_kultur": {
+		"key": "dlf_kultur",
+		"name": "DLF Kultur",
+		"url": "https://st02.sslstream.dlf.de/dlf/02/high/aac/stream.aac",
+		"skip_strings": [
+			""
+		],
+		"replace_strings": []
+	},
+	"dlf_nova": {
+		"key": "dlf_nova",
+		"name": "DLF Nova",
+		"url": "https://st03.sslstream.dlf.de/dlf/03/high/aac/stream.aac",
 		"skip_strings": [
 			""
 		],
