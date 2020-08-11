@@ -17,6 +17,8 @@ GPIO.setmode(GPIO.BCM)
 BUTTON_MAPPING = CONST.BUTTON_MAPPING
 
 
+GPIO.setup(17, GPIO.OUT)
+
 GPIO.setup(BUTTON_MAPPING['next_btn'], GPIO.IN, GPIO.PUD_UP)
 GPIO.setup(BUTTON_MAPPING['prev_btn'], GPIO.IN, GPIO.PUD_UP)
 GPIO.setup(BUTTON_MAPPING['pause_btn'], GPIO.IN, GPIO.PUD_UP)
@@ -59,7 +61,7 @@ def callback_unknown(channel):
 def callback_power(channel):
     logger.debug('power button pressed')
 
-    if time() - STATE['last_power_button_push'] < 2:
+    if time() - STATE['last_power_button_push'] < CONST.PWR_DEBOUNCE:
         logger.debug('power button pressed < 2 secs')
         return
 
@@ -74,13 +76,15 @@ def callback_power(channel):
     logger.debug('Power state set to: {}'.format(power_state))
 
     if power_state:  # standby is off GPIO is HIGH
-        # leaf standby
+        # leave standby
+
         rfid.start_thread()
         infrared.start_thread()
 
-        control_leaf_standby()
+        control_leave_standby()
     else:  # standby is ON GPIO is LOW
         # enter standby
+        # GPIO.output(17, GPIO.LOW)
         control_enter_standby()
 
         infrared.stop_thread()

@@ -90,9 +90,9 @@ def control_enter_standby():
         logger.warning('Set power state failed {}'.format(e))
 
 
-def control_leaf_standby():
-    logger.debug('control_leaf_standby')
-    radio.leaf_standby()
+def control_leave_standby():
+    logger.debug('control_leave_standby')
+    radio.leave_standby()
 
     display.set_standby_onoff(False)
     subprocess.call(["rfkill", "unblock", "bluetooth"])
