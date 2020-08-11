@@ -138,3 +138,4 @@ dmypy.json
 .pyre/
 
 *.webm
+.DS_Store
