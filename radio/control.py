@@ -1,8 +1,10 @@
 import subprocess
+from time import sleep
 
 
 import display
 import radio
+import speakers
 import utils
 from enums import PlaybackMode
 
@@ -83,6 +85,8 @@ def control_enter_standby():
     radio.enter_standby()
     utils.save_radio_conf()
 
+    speakers.off()
+
     try:
         display.set_standby_onoff(True)
         subprocess.call(["rfkill", "block", "bluetooth"])
@@ -92,6 +96,10 @@ def control_enter_standby():
 
 def control_leave_standby():
     logger.debug('control_leave_standby')
+
+    sleep(CONST.RELAIS_DELAY)
+    speakers.on()
+
     radio.leave_standby()
 
     display.set_standby_onoff(False)

@@ -5,6 +5,8 @@ import threading
 import sys
 
 
+import buttons
+
 import constants as CONST
 import utils as utils
 import display as display
@@ -15,9 +17,6 @@ import weather as weather
 import infrared as infrared
 import rfid as rfid
 import bluetooth as bluetooth
-
-import buttons
-
 import radio as radio
 
 
@@ -100,7 +99,7 @@ def _set_initial_state_and_setup():
     if STATE['power_state'] is PowerState.Powered:  # power state on
         infrared.start_thread()
         rfid.start_thread()
-        radio.leaf_standby()
+        radio.leave_standby()
 
 
 _set_initial_state_and_setup()
