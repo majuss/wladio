@@ -1,7 +1,6 @@
 import mpv
 import time
 
-
 import utils as utils
 import constants as CONST
 
@@ -181,8 +180,8 @@ def enter_standby():
     STATE['paused'] = True
 
 
-def leaf_standby():
-    logger.debug('leaf_standby')
+def leave_standby():
+    logger.debug('leave_standby')
 
     if STATE['playback_mode'] is PlaybackMode.Radio:
         radioPlayer.playlist_pos = STATE['radio_playlist_position']
