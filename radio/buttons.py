@@ -16,7 +16,11 @@ GPIO.setmode(GPIO.BCM)
 
 BUTTON_MAPPING = CONST.BUTTON_MAPPING
 
-GPIO.setup(17, GPIO.OUT)
+GPIO.setup(7, GPIO.OUT) # relay door
+
+GPIO.output(7, GPIO.HIGH)
+
+
 GPIO.setup(BUTTON_MAPPING['next_btn'], GPIO.IN, GPIO.PUD_UP)
 GPIO.setup(BUTTON_MAPPING['prev_btn'], GPIO.IN, GPIO.PUD_UP)
 GPIO.setup(BUTTON_MAPPING['pause_btn'], GPIO.IN, GPIO.PUD_UP)

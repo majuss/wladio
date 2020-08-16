@@ -4,6 +4,7 @@ import utils as utils
 
 from enums import *
 
+GPIO.setup(17, GPIO.OUT)
 
 logger = utils.create_logger(__name__)
 STATE = utils.state()

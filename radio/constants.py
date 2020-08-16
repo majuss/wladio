@@ -29,7 +29,7 @@ BUTTON_MAPPING = {
     'garage_door': 20,
     'driveway': 21,
     'unknown': 27,
-    'power': 23,
+    'power': 22,
     'vol_clk': 5,
     'vol_dt': 6,
     'vol_sw': 13,
