@@ -23,8 +23,8 @@ BRIGHTNESS = 255
 
 # GPIO
 BUTTON_MAPPING = {
-    'next_btn': 12,
-    'prev_btn': 4,
+    'next_btn': 4,
+    'prev_btn': 12,
     'pause_btn': 19,
     'garage_door': 20,
     'driveway': 21,
