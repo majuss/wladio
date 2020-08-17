@@ -6,11 +6,13 @@ import display
 import radio
 import speakers
 import utils
+import constants as CONST
 from enums import PlaybackMode
 
 
 logger = utils.create_logger(__name__)
 STATE = utils.state()
+
 
 
 def control_up(diff):
