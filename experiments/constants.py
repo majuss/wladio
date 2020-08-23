@@ -9,7 +9,7 @@ RELAIS_DELAY = 1
 
 #Pathes and files
 MUSIC_LIB_PATH = '/home/pi/'
-STATIONS_FILE = 'stations.json'
+STATIONS_FILE = 'stations2.json'
 MUSIC_LIB_FILE = 'music_lib.json'
 
 # Player controls

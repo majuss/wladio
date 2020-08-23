@@ -235,12 +235,12 @@ def get_stream_name():
 
 
 def _get_current_station_name():
-    url = radioPlayer.playlist[radioPlayer.playlist_pos]['filename']
-    for station in radioStations:
-        if url == radioStations[station]['url']:
-            return radioStations[station]['name']
-    logger.debug('no station name found for ' + str(url))
-    return 'NO STATION FOUND'
+    try:
+        return radioStations[radioPlayer.playlist_pos]['name']
+    except:
+        pass
+        logger.debug('no station name found for ' + str(url))
+        return 'NO STATION FOUND'
 
 
 # change player volume
