@@ -91,12 +91,12 @@ SW = Pin 33
 Links:
 https://codingworld.io/project/rfid-grundlagen
 
-|Function|BMC Pin|Board Pin|
+|Function|BCM Pin|Board Pin|
 |---|---|---|
 |RST|16|36|
 |IRQ|26 |37|
 |MISO|9 MISO| 21|
-|MOSI|10 MOSI| |19|
+|MOSI|10 MOSI| 19|
 |SCK|11 SCLK |23|
 |SDA|7 CE1 |26|
 
