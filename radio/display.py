@@ -348,7 +348,7 @@ def _remove_standby_viewport():
 
 def initalize():  # 1 PowerState.Powered / 0 PowerState.Standby
     global viewport_thread
-
+    t_sleep(0.5)
     logger.debug('intialize radio display to state {}'.format(
         STATE['power_state']))
 

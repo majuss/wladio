@@ -31,15 +31,15 @@ Links:
 - Oled 3.12"
 - Controller: SSD1322
 
-| OLED Pin | Name | Function    | Pi Pin |
-|----------|------|-------------|--------|
-| 1        | GND  | Ground      | 6      |
-| 2        | VCC  | 3.3 V       | 1      |
-| 4        | D0   | Clock       | 23     |
-| 5        | D1   | MOSI        | 19     |
-| 15       | RST  | Reset       | 22     |
-| 14       | DC   | Data Common | 18     |
-| 16       | CS   | Chip Select | 24     |
+| OLED Pin | Name | Function    | BCM Pin| Board Pin |
+|----------|------|-------------|--------|---------|
+| 1        | GND  | Ground      | GND    |  6      |
+| 2        | VCC  | 3.3 V       | VCC    |  1      |
+| 4        | D0   | Clock       | 11 SCLK|  23     |
+| 5        | D1   | MOSI        | 10 MOSI|  19     |
+| 15       | RST  | Reset       | 25     |  22     |
+| 14       | DC   | Data Common | 24     |  18     |
+| 16       | CS   | Chip Select | 8 CE0  |  24     |
 
 ## Infrared
 
@@ -91,14 +91,14 @@ SW = Pin 33
 Links:
 https://codingworld.io/project/rfid-grundlagen
 
-|Function|Pin|
-|---|---|
-|RST|36|
-|IRQ |37|
-|MISO| 21|
-|MOSI |19|
-|SCK |23|
-|SDA |26|
+|Function|BMC Pin|Board Pin|
+|---|---|---|
+|RST|16|36|
+|IRQ|26 |37|
+|MISO|9 MISO| 21|
+|MOSI|10 MOSI| |19|
+|SCK|11 SCLK |23|
+|SDA|7 CE1 |26|
 
 ## Bluetooth
 

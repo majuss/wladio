@@ -16,9 +16,9 @@ GPIO.setmode(GPIO.BCM)
 
 BUTTON_MAPPING = CONST.BUTTON_MAPPING
 
-GPIO.setup(7, GPIO.OUT) # relay door
+# GPIO.setup(7, GPIO.OUT) # relay door
 
-GPIO.output(7, GPIO.HIGH)
+# GPIO.output(7, GPIO.HIGH)
 
 
 GPIO.setup(BUTTON_MAPPING['next_btn'], GPIO.IN, GPIO.PUD_UP)
@@ -28,7 +28,7 @@ GPIO.setup(BUTTON_MAPPING['garage_door'], GPIO.IN, GPIO.PUD_UP)
 GPIO.setup(BUTTON_MAPPING['driveway'], GPIO.IN, GPIO.PUD_UP)
 GPIO.setup(BUTTON_MAPPING['unknown'], GPIO.IN, GPIO.PUD_UP)
 
-GPIO.setup(BUTTON_MAPPING['power'], GPIO.IN, GPIO.PUD_DOWN)
+# GPIO.setup(BUTTON_MAPPING['power'], GPIO.IN, GPIO.PUD_DOWN)
 
 GPIO.setup(BUTTON_MAPPING['vol_clk'], GPIO.IN, GPIO.PUD_DOWN)
 GPIO.setup(BUTTON_MAPPING['vol_dt'], GPIO.IN, GPIO.PUD_DOWN)
@@ -60,39 +60,39 @@ def callback_unknown(channel):
     radio.toggle_shuffle_cd()
 
 
-def callback_power(channel):
-    logger.debug('power button pressed')
+# def callback_power(channel):
+#     logger.debug('power button pressed')
 
-    if time() - STATE['last_power_button_push'] < CONST.PWR_DEBOUNCE:
-        logger.debug('power button pressed < 2 secs')
-        return
+#     if time() - STATE['last_power_button_push'] < CONST.PWR_DEBOUNCE:
+#         logger.debug('power button pressed < 2 secs')
+#         return
 
-    logger.debug('continue to decision')
+#     logger.debug('continue to decision')
 
-    STATE['last_power_button_push'] = time()
+#     STATE['last_power_button_push'] = time()
 
-    sleep(0.001)
+#     sleep(0.001)
 
-    power_state = GPIO.input(channel)
+#     power_state = GPIO.input(channel)
 
-    logger.debug('Power state set to: {}'.format(power_state))
+#     logger.debug('Power state set to: {}'.format(power_state))
 
-    if power_state:  # standby is off GPIO is HIGH
-        # leave standby
+#     if power_state:  # standby is off GPIO is HIGH
+#         # leave standby
 
-        rfid.start_thread()
-        infrared.start_thread()
+#         rfid.start_thread()
+#         infrared.start_thread()
 
-        control_leave_standby()
-    else:  # standby is ON GPIO is LOW
-        # enter standby
-        # GPIO.output(17, GPIO.LOW)
-        control_enter_standby()
+#         control_leave_standby()
+#     else:  # standby is ON GPIO is LOW
+#         # enter standby
+#         # GPIO.output(17, GPIO.LOW)
+#         control_enter_standby()
 
-        infrared.stop_thread()
-        rfid.stop_thread()
+#         infrared.stop_thread()
+#         rfid.stop_thread()
 
-    # 2020-06-13 19:20:16,369 WARNING Set power state failed list.remove(x): x not in list
+#     # 2020-06-13 19:20:16,369 WARNING Set power state failed list.remove(x): x not in list
 
 
 # globals for wheel
@@ -136,17 +136,17 @@ GPIO.add_event_detect(BUTTON_MAPPING['driveway'], GPIO.FALLING,
 GPIO.add_event_detect(BUTTON_MAPPING['unknown'], GPIO.FALLING,
                       callback=callback_unknown, bouncetime=350)
 
-GPIO.add_event_detect(
-    BUTTON_MAPPING['power'], GPIO.BOTH, callback=callback_power, bouncetime=250)
+# GPIO.add_event_detect(
+#     BUTTON_MAPPING['power'], GPIO.BOTH, callback=callback_power, bouncetime=250)
 
 GPIO.add_event_detect(BUTTON_MAPPING['vol_clk'], GPIO.BOTH,
                       callback=callback_vol, bouncetime=1)
 GPIO.add_event_detect(BUTTON_MAPPING['vol_sw'], GPIO.FALLING,
                       callback=callback_vol_sw, bouncetime=350)
 
-powerState = GPIO.input(BUTTON_MAPPING['power'])
-logger.debug('radio power state is ' + str(powerState))
-if powerState:  # power state on
-    STATE['power_state'] = PowerState.Powered
-else:
-    STATE['power_state'] = PowerState.Standby
+# powerState = GPIO.input(BUTTON_MAPPING['power'])
+# logger.debug('radio power state is ' + str(powerState))
+# if powerState:  # power state on
+#     STATE['power_state'] = PowerState.Powered
+# else:
+#     STATE['power_state'] = PowerState.Standby
