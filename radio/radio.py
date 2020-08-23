@@ -193,9 +193,10 @@ def leave_standby():
     STATE['paused'] = STATE['muted'] = False
 
 
-#############################
-# return current active player acording to state
+
 def get_player():
+    """return current active player acording to state"""
+
     if STATE['playback_mode'] is PlaybackMode.Radio:
         return radioPlayer
     if STATE['playback_mode'] is PlaybackMode.CD:

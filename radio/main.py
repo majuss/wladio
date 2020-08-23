@@ -18,6 +18,7 @@ import infrared as infrared
 import rfid as rfid
 import bluetooth as bluetooth
 import radio as radio
+import power as power
 
 
 logger = utils.create_logger('main')
@@ -91,6 +92,7 @@ tag_thread.start()
 
 weather.start_thread()
 bluetooth.start_thread()
+power.start_thread()
 
 
 def _set_initial_state_and_setup():

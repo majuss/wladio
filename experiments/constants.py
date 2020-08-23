@@ -9,7 +9,7 @@ RELAIS_DELAY = 1
 
 #Pathes and files
 MUSIC_LIB_PATH = '/home/pi/'
-STATIONS_FILE = 'stations2.json'
+STATIONS_FILE = 'stations.json'
 MUSIC_LIB_FILE = 'music_lib.json'
 
 # Player controls
@@ -22,6 +22,10 @@ BRIGHTNESS_STANDBY = 10
 BRIGHTNESS = 255
 
 # GPIO
+SPEAKER_RELAY = 17
+DRIVEWAY_RELAY = 23
+GARAGE_RELAY = 22
+
 BUTTON_MAPPING = {
     'next_btn': 4,
     'prev_btn': 12,
