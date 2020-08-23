@@ -139,3 +139,4 @@ dmypy.json
 
 *.webm
 .DS_Store
+radio_conf.json
