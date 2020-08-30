@@ -5,9 +5,10 @@ from time import sleep
 import display
 import radio
 import speakers
+import bluetooth
 import utils
 import constants as CONST
-from enums import PlaybackMode
+from enums import PlaybackMode, PowerState
 
 
 logger = utils.create_logger(__name__)
@@ -47,6 +48,7 @@ def control_next():
 
     # im after file track change no metadata is available
     if STATE['playback_mode'] is PlaybackMode.Radio:
+        logger.debug('set main text to' + radio.get_stream_name())
         display.main_text(radio.get_stream_name())
 
 
@@ -86,11 +88,12 @@ def control_enter_standby():
     logger.debug('control_enter_standby')
     radio.enter_standby()
     utils.save_radio_conf()
+    bluetooth.stop_thread()
 
     speakers.off()
 
     try:
-        display.set_standby_onoff(True)
+        display.enter_standby()
         subprocess.call(["rfkill", "block", "bluetooth"])
     except Exception as e:
         logger.warning('Set power state failed {}'.format(e))
@@ -104,5 +107,14 @@ def control_leave_standby():
 
     radio.leave_standby()
 
-    display.set_standby_onoff(False)
+    display.leave_standby()
     subprocess.call(["rfkill", "unblock", "bluetooth"])
+
+    bluetooth.start_thread()
+
+
+def control_toggle_shuffle_cd():
+    radio.toggle_shuffle_cd()
+
+    if STATE['power_state'] is PowerState.Powered:
+        display.hard_refresh_top_viewport()

@@ -1,55 +1,42 @@
-{
-	"countryha": {
-		"key": "countryha",
-		"name": "Country 108",
-		"url": "http://sc1.netstreamer.net:8100",
-		"skip_strings": [
-			"foo"
-		],
-		"replace_strings": []
-	},
-	"hpschlager": {
-		"key": "hpschlager",
-		"name": "100% Schlager",
-		"url": "http://streams.schlagerplanetradio.com/schlager/mp3-192/yourmuze/play.m3u",
-		"skip_strings": [
-			""
-		],
-		"replace_strings": [
-			
-		]
-	},
-	"radiopsr": {
-		"key": "radiopsr",
-		"name": "Radio PSR",
-		"url": "http://streams.radiopsr.de/psr-live/mp3-192/mediaplayer",
-		"skip_strings": [
-			""
-		],
-		"replace_strings": []
-	},
-	"radioffh": {
-		"key": "radioffh",
-		"name": "Radio FFH",
-		"url": "http://streams.ffh.de/ffhchannels/aac/acoustichits.m3u",
-		"skip_strings": [
-			""
-		],
-		"replace_strings": []
-	},
-	
-	"abayern": {
-		"key": "abayern",
-		"name": "Antenne Bayern",
-		"url": "http://play.antenne.de/antenne.m3u",
-		"skip_strings": [
-			""
-		],
-		"replace_strings": [
-			
-		]
-	}
-
-
-	
-}
+[
+    {
+        "key": "countryha",
+        "name": "Country 108",
+        "url": "http://sc1.netstreamer.net:8100",
+        "skip_strings": [
+            ""
+        ]
+    },
+    {
+        "key": "hpschlager",
+        "name": "100% Schlager",
+        "url": "http://streams.schlagerplanetradio.com/schlager/mp3-192/yourmuze/play.m3u",
+        "skip_strings": [
+            ""
+        ]
+    },
+    {
+        "key": "radiopsr",
+        "name": "Radio PSR",
+        "url": "http://streams.radiopsr.de/psr-live/mp3-192/mediaplayer",
+        "skip_strings": [
+            ""
+        ]
+    },
+    {
+        "key": "radioffh",
+        "name": "Radio FFH",
+        "url": "http://streams.ffh.de/ffhchannels/aac/acoustichits.m3u",
+        "skip_strings": [
+            ""
+        ]
+    },
+    {
+        "key": "abayern",
+        "name": "Antenne Bayern",
+        "url": "http://play.antenne.de/antenne.m3u",
+        "skip_strings": [
+            ""
+        ]
+    }
+]

@@ -3,9 +3,9 @@ from time import sleep, time
 
 from enums import PowerState
 from control import *
-import infrared
-import rfid
 import utils
+import display
+import power
 import constants as CONST
 
 logger = utils.create_logger(__name__)
@@ -34,6 +34,12 @@ GPIO.setup(BUTTON_MAPPING['vol_clk'], GPIO.IN, GPIO.PUD_DOWN)
 GPIO.setup(BUTTON_MAPPING['vol_dt'], GPIO.IN, GPIO.PUD_DOWN)
 GPIO.setup(BUTTON_MAPPING['vol_sw'], GPIO.IN, GPIO.PUD_UP)
 
+GPIO.setup(CONST.GARAGE_RELAY, GPIO.OUT)
+GPIO.output(CONST.GARAGE_RELAY, GPIO.HIGH)
+
+GPIO.setup(CONST.DRIVEWAY_RELAY, GPIO.OUT)
+GPIO.output(CONST.DRIVEWAY_RELAY, GPIO.HIGH)
+
 
 def callback_next_btn(channel):
     control_next()
@@ -50,49 +56,47 @@ def callback_pause_btn(channel):
 def callback_garage_door(channel):
     logger.debug('garage door pressed')
 
+    power.stop_thread()
+
+    if STATE['power_state'] is PowerState.Standby:
+        display.leave_standby()
+
+    display.forced_text('Garagentor auf/zu', CONST.DOORS_TIMEOUT)
+    GPIO.output(CONST.GARAGE_RELAY, GPIO.LOW)
+    sleep(1)
+    GPIO.output(CONST.GARAGE_RELAY, GPIO.HIGH)
+
+    if STATE['power_state'] is PowerState.Standby:
+        sleep(CONST.DOORS_TIMEOUT)
+        display.enter_standby()
+
+    power.start_thread()
+
 
 def callback_driveway(channel):
     logger.debug('drive way button pressed')
 
+    power.stop_thread()
+
+    if STATE['power_state'] is PowerState.Standby:
+        display.leave_standby()
+
+    display.forced_text('Einfahrt auf/zu', CONST.DOORS_TIMEOUT)
+    GPIO.output(CONST.DRIVEWAY_RELAY, GPIO.LOW)
+    sleep(1)
+    GPIO.output(CONST.DRIVEWAY_RELAY, GPIO.HIGH)
+
+
+    if STATE['power_state'] is PowerState.Standby:
+        sleep(CONST.DOORS_TIMEOUT)
+        display.enter_standby()
+
+    power.start_thread()
+
 
 def callback_unknown(channel):
-    logger.debug('random song button pressed')
-    radio.toggle_shuffle_cd()
-
-
-# def callback_power(channel):
-#     logger.debug('power button pressed')
-
-#     if time() - STATE['last_power_button_push'] < CONST.PWR_DEBOUNCE:
-#         logger.debug('power button pressed < 2 secs')
-#         return
-
-#     logger.debug('continue to decision')
-
-#     STATE['last_power_button_push'] = time()
-
-#     sleep(0.001)
-
-#     power_state = GPIO.input(channel)
-
-#     logger.debug('Power state set to: {}'.format(power_state))
-
-#     if power_state:  # standby is off GPIO is HIGH
-#         # leave standby
-
-#         rfid.start_thread()
-#         infrared.start_thread()
-
-#         control_leave_standby()
-#     else:  # standby is ON GPIO is LOW
-#         # enter standby
-#         # GPIO.output(17, GPIO.LOW)
-#         control_enter_standby()
-
-#         infrared.stop_thread()
-#         rfid.stop_thread()
-
-#     # 2020-06-13 19:20:16,369 WARNING Set power state failed list.remove(x): x not in list
+    logger.debug('shuffle cd button pressed')
+    control_toggle_shuffle_cd()
 
 
 # globals for wheel
@@ -130,9 +134,11 @@ GPIO.add_event_detect(BUTTON_MAPPING['prev_btn'], GPIO.FALLING,
 GPIO.add_event_detect(BUTTON_MAPPING['pause_btn'], GPIO.FALLING,
                       callback=callback_pause_btn, bouncetime=350)
 GPIO.add_event_detect(BUTTON_MAPPING['garage_door'], GPIO.FALLING,
-                      callback=callback_garage_door, bouncetime=350)
+                      callback=callback_garage_door, bouncetime=CONST.DOORS_TIMEOUT * 1000 + 3000)
+
 GPIO.add_event_detect(BUTTON_MAPPING['driveway'], GPIO.FALLING,
-                      callback=callback_driveway, bouncetime=350)
+                      callback=callback_driveway, bouncetime=CONST.DOORS_TIMEOUT * 1000 + 3000)
+
 GPIO.add_event_detect(BUTTON_MAPPING['unknown'], GPIO.FALLING,
                       callback=callback_unknown, bouncetime=350)
 

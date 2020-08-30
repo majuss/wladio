@@ -11,14 +11,15 @@ from luma.core.virtual import viewport, snapshot, hotspot
 from luma.oled.device import ssd1322
 
 import constants as CONST
-import sensors_dummy as sensors
+import sensors as sensors
 import utils as utils
 from enums import *
 
 logger = utils.create_logger(__name__)
 STATE = utils.state()
 
-display_device = ssd1322(spi(device=0, port=0))
+spi_for_display = spi(device=0, port=0)
+display_device = ssd1322(spi_for_display)
 
 virtual = viewport(display_device, width=display_device.width,
                    height=display_device.height)
@@ -26,15 +27,16 @@ virtual = viewport(display_device, width=display_device.width,
 
 sleep_time = 1 / CONST.FPS
 main_text_dirty = True  # main text was overdrawn
-volume_changes = False  # the volume bar is visible
+forced_visualisation = False  # forced visualisation for a time frame
 
 
 def get_font(font_size, font_path='ressources/hel_new.otf'):
     return ImageFont.truetype(font_path, font_size)
 
 
+font_18 = get_font(18)
+font_20 = get_font(20)
 font_28 = get_font(28)
-font_16 = get_font(16)
 font_16_seg = get_font(
     16, 'ressources/DSEG14ClassicMini-Regular.ttf')
 font_32_seg = get_font(
@@ -74,32 +76,39 @@ def make_text_dict(text, next=0, font_size=28, main_text=True):
 # TODO: use CONST for paths
 cloud_image = Image.open('ressources/cloud.png').convert('RGBA')
 bt_image = Image.open('ressources/bt.png').convert('RGBA')
+shuffle_cd_image = Image.open('ressources/random.png').convert('RGBA')
 
 
 def top_snap(draw, width, height):
     logger.debug('draw top row (temps, time, bt, weather)')
 
-    draw.text((0, 0), '{}°  {}°'.format(
-        *sensors.get_data()), fill='white', font=font_16)
+    sensor_data = sensors.get_data()
 
-    draw.text((100, 0), '{:02d}:{:02d}'.format(*utils.get_local_hours_minutes()),
+    draw.text((0, 4), '{:.1f}°  {:.1f}°'.format(*(sensor_data[0:2])), fill='white', font=font_18)
+
+    draw.text((100, 2), '{:02d}:{:02d}'.format(*utils.get_local_hours_minutes()),
               fill='white', font=font_16_seg)
 
     if STATE['draw_rain_cloud_icon']:
         draw.bitmap((255 - 16, 1), cloud_image)
     if STATE['draw_bluetooth_icon']:
-        draw.bitmap((255-32-5, 0), bt_image)
+        draw.bitmap((255-32-5, 1), bt_image)
+    if STATE['shuffle_cd']:
+        draw.bitmap((255-32-5-16-5, 1), shuffle_cd_image)
 
 
 def standby_snap(draw, width, height):
     logger.debug('draw standby (temps, time, weather)')
-    temp_out, temp_in = sensors.get_data()
+    temp_in, temp_out, hum_in, hum_out = sensors.get_data()
 
-    draw.text((90, 16), '{:02d}:{:02d}'.format(*utils.get_local_hours_minutes()),
+    draw.text((145, 16), '{:02d}:{:02d}'.format(*utils.get_local_hours_minutes()),
               fill='white', font=font_32_seg)
 
-    draw.text((20, 10), '{}°'.format(temp_out), fill='white', font=font_28)
-    draw.text((20, 35), '{}°'.format(temp_in), fill='white', font=font_28)
+    draw.text((5, 10), '{:.1f}°'.format(temp_out), fill='white', font=font_20)
+    draw.text((5, 35), '{:.1f}°'.format(temp_in), fill='white', font=font_20)
+
+    draw.text((70, 10), '{:.0f}%'.format(hum_out), fill='white', font=font_20)
+    draw.text((70, 35), '{:.0f}%'.format(hum_in), fill='white', font=font_20)
 
     if (STATE['draw_rain_cloud_icon']):
         draw.bitmap((255 - 16, 1), cloud_image)
@@ -121,7 +130,7 @@ class Main_Hotspot(hotspot):
 
     def should_redraw(self):
         global current_rendered_main
-        global volume_changes
+        global forced_visualisation
         # print(self._data['next'], str(time.time()), str(self._data['next'] < time.time()), str(self._data['next'] - time.time()))
 
         if update_text_line:
@@ -140,7 +149,7 @@ class Main_Hotspot(hotspot):
 
         # print('should_redraw True')
 
-        volume_changes = False
+        forced_visualisation = False
 
         return True
 
@@ -194,7 +203,7 @@ def tag_text(text):
     if STATE['muted'] is True or STATE['paused'] is True:
         return
 
-    if volume_changes or (current_rendered_main['text'] == text):
+    if forced_visualisation or (current_rendered_main['text'] == text):
         return
 
     update_text_line = True
@@ -216,7 +225,7 @@ def main_text(text):
 
 def overlay_rect(x, timeout=CONST.RECT_TIMEOUT):
     global current_rendered_main
-    global volume_changes
+    global forced_visualisation
     global update_text_line
 
     logger.debug('overlay_rect')
@@ -229,8 +238,18 @@ def overlay_rect(x, timeout=CONST.RECT_TIMEOUT):
         'text': 'rect_' + str(time.time())
     }
 
-    volume_changes = True
-    update_text_line = True
+    forced_visualisation = update_text_line = True
+
+
+def forced_text(text, timeout):
+    global current_rendered_main
+    global forced_visualisation
+    global update_text_line
+
+    logger.debug('forced text: ' + text)
+
+    current_rendered_main = make_text_dict(text, time.time() + timeout, 28, False)
+    forced_visualisation = update_text_line = True
 
 
 def set_pause_or_mute_text(text):
@@ -242,31 +261,28 @@ def set_pause_or_mute_text(text):
 
 
 def remove_pause_or_mute_text():
+
+
+    
     global current_rendered_main
     current_rendered_main['next'] = 1  # trigers reset to saved main text
 
 
 def hard_refresh_top_viewport():
     global top_viewport
+    logger.debug('hard_refresh_top_viewport')
 
-    new_top_viewport = snapshot(256, 16, top_snap, 60.0)
+    new_top_viewport = snapshot(256, 27, top_snap, 60.0)
     virtual.remove_hotspot(top_viewport, (0, 0))
 
     top_viewport = new_top_viewport
     virtual.add_hotspot(top_viewport, (0, 0))
 
 
-def set_standby_onoff(onoff):
-    global sleep_time
-    global viewport_thread
-
-    if onoff:  # standby is on
-        if STATE['power_state'] is PowerState.Standby:
-            return
-        STATE['power_state'] = PowerState.Standby
+def enter_standby():
+        logger.debug('enter standby')
 
         display_device.contrast(CONST.BRIGHTNESS_STANDBY)
-        sleep_time = 60
 
         _remove_powered_viewport()
         _setup_state_standby()
@@ -274,13 +290,23 @@ def set_standby_onoff(onoff):
         t_sleep(1)
         virtual.refresh()
 
-    else:  # standby is off
-        if STATE['power_state'] is PowerState.Powered:
-            return
-        STATE['power_state'] = PowerState.Powered
+
+def _restart_viewport_thread():
+    global viewport_thread
+
+    if viewport_thread is not None:
+        viewport_thread.name = 'stop'  # trigger stop for old thread
+
+    viewport_thread = threading.Thread(target=viewport_loop)
+    viewport_thread.name = 'run'
+    viewport_thread.start()
+
+
+def leave_standby():
+        logger.debug('leave standby')
+        global viewport_thread
 
         display_device.contrast(CONST.BRIGHTNESS)
-        sleep_time = 1 / CONST.FPS
 
         _remove_standby_viewport()
 
@@ -289,11 +315,8 @@ def set_standby_onoff(onoff):
         _setup_state_powered()
 
         virtual.refresh()
-        viewport_thread.name = 'stop'  # trigger stop for old thread
-
-        viewport_thread = threading.Thread(target=viewport_loop)
-        viewport_thread.name = 'run'
-        viewport_thread.start()
+        
+        _restart_viewport_thread()
 
 
 def viewport_loop():
@@ -310,8 +333,11 @@ viewport_thread = None
 def _setup_state_powered():
     global top_viewport
     global main_viewport
+    global sleep_time
 
-    top_viewport = snapshot(256, 16, top_snap, 60)
+    sleep_time = 1 / CONST.FPS
+
+    top_viewport = snapshot(256, 27, top_snap, 60)
     main_viewport = Main_Hotspot(256, 28)
 
     virtual.add_hotspot(top_viewport, (0, 0))
@@ -331,6 +357,9 @@ def _remove_powered_viewport():
 
 def _setup_state_standby():
     global standby_viewport
+    global sleep_time
+
+    sleep_time = 60
 
     standby_viewport = snapshot(256, 64, standby_snap, 60)
 
@@ -361,6 +390,5 @@ def initalize():  # 1 PowerState.Powered / 0 PowerState.Standby
     elif STATE['power_state'] is PowerState.Unknown:
         logger.debug('POWER STATE NOT SET')
 
-    viewport_thread = threading.Thread(target=viewport_loop)
-    viewport_thread.name = 'run'
-    viewport_thread.start()
+    _restart_viewport_thread()
+

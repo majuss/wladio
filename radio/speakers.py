@@ -5,6 +5,8 @@ import utils as utils
 from constants import SPEAKER_RELAY
 from enums import *
 
+GPIO.setmode(GPIO.BCM)
+
 GPIO.setup(SPEAKER_RELAY, GPIO.OUT)
 
 logger = utils.create_logger(__name__)
@@ -12,12 +14,12 @@ STATE = utils.state()
 
 def off():
     # speaker disconnect
-    GPIO.output(SPEAKER_RELAY, GPIO.LOW)
+    logger.debug('speakers off')
+    GPIO.output(SPEAKER_RELAY, GPIO.HIGH)
 
 def on():
     # speaker connect
-    GPIO.output(SPEAKER_RELAY, GPIO.HIGH)
+    logger.debug('speakers on')
+    GPIO.output(SPEAKER_RELAY, GPIO.LOW)
 
 off()
-
-

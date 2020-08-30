@@ -1,5 +1,11 @@
 import threading
 
+class DummySensor:
+    def __init__(self):
+        self.temperature = 99.9
+        self.humidity = -1
+        self.sea_level_pressure = 0
+
 
 def init_sensors():
     import board
@@ -9,10 +15,22 @@ def init_sensors():
     import adafruit_bme680
 
     i2c = I2C(board.SCL, board.SDA)
-    bme280 = adafruit_bme280.Adafruit_BME280_I2C(i2c)
-    bme680 = adafruit_bme680.Adafruit_BME680_I2C(i2c)
+    bme280 = None
+    bme680 = None
+    
+    try:
+        bme280 = adafruit_bme280.Adafruit_BME280_I2C(i2c)
+    except:
+        bme280 = DummySensor()
+    
+    try:
+        bme680 = adafruit_bme680.Adafruit_BME680_I2C(i2c)
+    except:
+        bme680 = DummySensor()
+
     bme280.sea_level_pressure = 1013.25
     bme680.sea_level_pressure = 1013.25
+
     return bme280, bme680
 
 
@@ -41,5 +59,5 @@ bme280, bme680 = init_sensors()
 #         sleep(60)
 
 
-def get_data():
-    return bme280.temperature, bme680.temperature
+def get_data(): # 280 inside 680 outside
+    return bme280.temperature, bme680.temperature, bme280.humidity, bme680.humidity

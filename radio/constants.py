@@ -1,14 +1,15 @@
 # Timing based constants
 FPS = 30
 RECT_TIMEOUT = 1
+DOORS_TIMEOUT = 5
 SCROLL_RETAIN = 2
 VOL_KNOB_SPEED = 2
-SCROLL_SPEED = 3
+SCROLL_SPEED = 4
 PWR_DEBOUNCE = 0.7
 RELAIS_DELAY = 1
 
 #Pathes and files
-MUSIC_LIB_PATH = '/home/pi/'
+MUSIC_LIB_PATH = '/home/pi/music_lib/'
 STATIONS_FILE = 'stations.json'
 MUSIC_LIB_FILE = 'music_lib.json'
 
@@ -20,6 +21,9 @@ VOLUME_CHANGE_DIFF = 2
 # Display controls
 BRIGHTNESS_STANDBY = 10
 BRIGHTNESS = 255
+
+# RFID
+MAX_CONT_FAILS = 5
 
 # GPIO
 SPEAKER_RELAY = 17
