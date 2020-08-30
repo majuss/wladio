@@ -23,12 +23,11 @@ radioPlayer.command('stop')
 
 cdPlayer = mpv.MPV(loop_playlist='inf')
 cdPlayer.volume = CONST.CD_PLAYER_START_VOL
-toggle_cd = False
 
 
 # add stream urls to radio playlist
 for station in radioStations:
-    radioPlayer.playlist_append(radioStations[station]['url'])
+    radioPlayer.playlist_append(station['url'])
 
 
 # handels
@@ -40,14 +39,15 @@ def next():
     if player is None:
         return
 
-    num_playlists = len(player.playlist)
+    playlist_items = len(player.playlist)
 
-    if STATE['radio_playlist_position'] + 1 is num_playlists:
+    if player.playlist_pos + 1 is playlist_items:
         player.playlist_pos = 0
     else:
         player.playlist_next()
 
-    STATE['radio_playlist_position'] = player.playlist_pos
+    if STATE['playback_mode'] is PlaybackMode.Radio:
+        STATE['radio_playlist_position'] = player.playlist_pos
 
 
 # when was prev last pressed?
@@ -68,12 +68,13 @@ def prev():
     if 2 < diff_time and diff_time < 10:  # only when two button presses occure in a time frame from greater 2 and smaller 10 seconds
         player.seek(-15)
     elif diff_time < 2:
-        if STATE['radio_playlist_position'] - 1 is -1:
+        if player.playlist_pos - 1 is -1:
             player.playlist_pos = len(player.playlist) - 1
         else:
             player.playlist_prev()
 
-        STATE['radio_playlist_position'] = player.playlist_pos
+        if STATE['playback_mode'] is PlaybackMode.Radio:
+            STATE['radio_playlist_position'] = player.playlist_pos
 
 
 def up(diff):
@@ -145,24 +146,25 @@ def toggle_shuffle_cd():
     if STATE['playback_mode'] is not PlaybackMode.CD:
         return
 
-    global toggle_cd
-
-    if toggle_cd:
+    if STATE['shuffle_cd']:
         cdPlayer.command('playlist-unshuffle')
     else:
         cdPlayer.command('playlist-shuffle')
 
-    toggle_cd = not toggle_cd
+    STATE['shuffle_cd'] = not STATE['shuffle_cd']
 
 
 def unmute_unpause_current_player():
     logger.debug('unmute_unpause_current_player')
+
+    logger.debug('get_player() for state {}'.format(STATE['playback_mode']))
 
     player = get_player()
     if player is None:
         return
 
     STATE['muted'] = STATE['paused'] = player.mute = player.pause = False
+    logger.debug('_check_radio_pause()')
     _check_radio_pause()
 
 
@@ -240,7 +242,7 @@ def _get_current_station_name():
         return radioStations[radioPlayer.playlist_pos]['name']
     except:
         pass
-        logger.debug('no station name found for ' + str(url))
+        logger.debug('no station name found for position ' + str(radioPlayer.playlist_pos))
         return 'NO STATION FOUND'
 
 
@@ -259,6 +261,8 @@ def _volume_change(amount):
     elif new_vol > 100:  # restrict to 100 .volume can go up to 999 until it throws exception
         new_vol = 100
 
+    logger.debug('new volume ' + str(new_vol))
+
     player.volume = new_vol
 
     if STATE['playback_mode'] is PlaybackMode.Radio:
@@ -275,6 +279,8 @@ def _check_radio_pause():
     if STATE['paused'] is False or STATE['muted'] is False:
         diff = time.time() - STATE['radio_last_pause']
 
-        if CONST.RADIO_MAX_PAUSE_DIFF < diff:
+        if CONST.RADIO_MAX_PAUSE_DIFF < diff: # reset radio playback to live
             radioPlayer.playlist_pos = STATE['radio_playlist_position']
-            print(diff)
+            # print(diff)
+
+

@@ -1,14 +1,19 @@
 from pirc522 import RFID
 rdr = RFID()
+import time
 
 while True:
-  rdr.wait_for_tag()
-  (error, tag_type) = rdr.request()
-  if not error:
-    print("Tag detected")
-    (error, uid) = rdr.anticoll()
+    time.sleep(10)
+    rdr.wait_for_tag()
+    (error, tag_type) = rdr.request()
+
     if not error:
-      print("UID: " + str(uid))
+        print("Tag detected")
+        (error, uid) = rdr.anticoll()
+        if not error:
+            print("UID: " + str(uid))
+        else:
+            print('error anticoll()')
     #   # Select Tag is required before Auth
     #   if not rdr.select_tag(uid):
     #     # Auth for block 10 (block 2 of sector 2) using default shipping key A
@@ -17,6 +22,10 @@ while True:
     #       print("Reading block 10: " + str(rdr.read(10)))
     #       # Always stop crypto1 when done working
     #       rdr.stop_crypto()
+    else:
+        print('error .request()')
+
+  
 
 # Calls GPIO cleanup
 rdr.cleanup()

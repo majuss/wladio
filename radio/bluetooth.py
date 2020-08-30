@@ -5,7 +5,7 @@ import subprocess
 import utils
 import radio
 import display
-from enums import PlaybackMode
+from enums import PlaybackMode, PowerState
 
 logger = utils.create_logger(__name__)
 STATE = utils.state()
@@ -29,6 +29,10 @@ def _bluetooth():
     def device_property_changed(interface, changed, invalidated, path):
         iface = interface[interface.rfind(".") + 1:]
 
+        print(interface)
+        print(iface)
+        print(changed)
+
         if iface == 'Device1':
             if "Connected" in changed:
                 if changed['Connected']:
@@ -39,6 +43,7 @@ def _bluetooth():
 
                     STATE['draw_bluetooth_icon'] = True
                     display.hard_refresh_top_viewport()
+                    display.main_text('Bluetoothmodus eingeschalten')
 
                 else:
                     logger.debug('Radio mode set to Radio')
@@ -46,7 +51,9 @@ def _bluetooth():
                     radio.unmute_unpause_current_player()
 
                     STATE['draw_bluetooth_icon'] = False
-                    display.hard_refresh_top_viewport()
+
+                    if STATE['power_state'] is PowerState.Powered:
+                        display.hard_refresh_top_viewport()
 
         elif iface == 'MediaPlayer1':
             if 'Track' in changed:
@@ -79,7 +86,8 @@ def _bluetooth():
 
 
 def _bluetooth_pairable():
-    while True:
+    t = threading.current_thread()
+    while t.name == 'run':
         try:
             subprocess.call(['bluetoothctl', 'discoverable', 'on'])
         except:
@@ -97,24 +105,24 @@ def _bluetooth_pairable():
 
 def start_thread():
     global bluetooth_thread
+    global bluetooth_pairable_thread
 
-    if bluetooth_thread is not None:
+    if bluetooth_thread is None:
+        bluetooth_thread = threading.Thread(target=_bluetooth)
+        bluetooth_thread.name = 'run'
+        bluetooth_thread.start()
+
+    if bluetooth_pairable_thread is None:
+        bluetooth_pairable_thread = threading.Thread(target=_bluetooth_pairable)
+        bluetooth_pairable_thread.name = 'run'
+        bluetooth_pairable_thread.start()
+
+
+def stop_thread():
+    global bluetooth_pairable_thread
+
+    if bluetooth_pairable_thread is None:
         return
 
-    bluetooth_thread = threading.Thread(target=_bluetooth)
-    bluetooth_thread.name = 'run'
-    bluetooth_thread.start()
-
-    bluetooth_pairable_thread = threading.Thread(target=_bluetooth_pairable)
-    bluetooth_pairable_thread.name = 'run'
-    bluetooth_pairable_thread.start()
-
-
-# def stop_thread():
-#     global bluetooth_thread
-
-#     if bluetooth_thread is None:
-#         return
-
-#     bluetooth_thread.name = 'stop'
-#     bluetooth_thread = None
+    bluetooth_pairable_thread.name = 'stop'
+    bluetooth_pairable_thread = None

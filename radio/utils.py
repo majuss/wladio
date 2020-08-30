@@ -3,19 +3,21 @@ import time
 
 import logging
 import sys
+import os
 
 
-import constants
+import constants as CONST
 
 from enums import *
 
+stations = None
+music_lib = None
+with open(CONST.STATIONS_FILE) as stations_file:
+    stations = json.load(stations_file)
+with open(CONST.MUSIC_LIB_FILE) as music_lib_file:
+    music_lib = json.load(music_lib_file)
 
 def openFiles():
-    with open(constants.STATIONS_FILE) as stations_file:
-        stations = json.load(stations_file)
-    with open(constants.MUSIC_LIB_FILE) as music_lib_file:
-        music_lib = json.load(music_lib_file)
-
     return [stations, music_lib]
 
 
@@ -47,6 +49,7 @@ state_object = {
 
     'power_state': PowerState.Unknown,
     'playback_mode': PlaybackMode.Radio,
+    'shuffle_cd': False,
 
     'last_power_button_push': 0,  # when was power button last pressed?
 
@@ -93,3 +96,31 @@ def create_logger(name):
     logger.setLevel(logging.DEBUG)
 
     return logger
+
+
+
+cd_paths_without_id=[]
+music_lib_paths={}
+for path in music_lib.values():
+    music_lib_paths[path] = 1
+
+for root, subFolders, files in os.walk(CONST.MUSIC_LIB_PATH):
+    if len(subFolders):
+        continue
+
+    relative_path = root[len(CONST.MUSIC_LIB_PATH):]
+
+    if relative_path not in music_lib_paths:
+        cd_paths_without_id.append(relative_path)
+
+print(cd_paths_without_id)
+
+def get_cd_paths_without_id():
+    return cd_paths_without_id
+
+def save_music_lib():
+    try:
+        with open(CONST.MUSIC_LIB_FILE, 'w') as outfile:
+            json.dump(music_lib, outfile, indent=4)
+    except:
+        pass

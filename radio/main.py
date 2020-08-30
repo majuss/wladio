@@ -19,6 +19,7 @@ import rfid as rfid
 import bluetooth as bluetooth
 import radio as radio
 import power as power
+import speakers as speakers
 
 
 logger = utils.create_logger('main')
@@ -28,16 +29,8 @@ STATE = utils.state()
 # Load stations and music library file
 stations, music_lib = utils.openFiles()
 
-
-def get_current_station(player, stations):  # todo function name should add _key
-    url = player.playlist[player.playlist_pos]['filename']
-    for station in stations:
-        if url == stations[station]['url']:
-            return station
-
-
-def get_station_obj(station_name):
-    return stations[station_name]
+def get_station_object_by_player(player, stations):
+    return stations[player.playlist_pos]
 
 
 def print_tags():
@@ -49,8 +42,7 @@ def print_tags():
                 player = radio.get_player()
 
                 if player.metadata is not None and 'icy-title' in player.metadata:  # soemtimes buggy
-                    station = get_station_obj(
-                        get_current_station(player, stations))
+                    station = get_station_object_by_player(player, stations)
                     tag = player.metadata['icy-title']
                     # print(tag)
 
@@ -68,8 +60,8 @@ def print_tags():
             try:
                 player = radio.get_player()
 
-                txt = '(' + str(player.playlist_pos + 1) + \
-                    '/' + str(player.playlist_count) + ')'
+                txt = str(player.playlist_pos + 1) + \
+                    '/' + str(player.playlist_count)
 
                 txts = []
                 if 'title' in player.metadata:
@@ -102,6 +94,7 @@ def _set_initial_state_and_setup():
         infrared.start_thread()
         rfid.start_thread()
         radio.leave_standby()
+        speakers.on()
 
 
 _set_initial_state_and_setup()
