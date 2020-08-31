@@ -60,7 +60,7 @@ def _rfid_loop():
 
                 cd_path = None
                 
-                if write_cd_lib_mode
+                if write_cd_lib_mode:
                     if last_set_cd is not None: # write tag
                         """try to assign new cd, fall through for next selection """
                         if rfid in music_lib:
