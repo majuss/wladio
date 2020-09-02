@@ -6,6 +6,7 @@ import display
 import radio
 import speakers
 import bluetooth
+import rfid
 import utils
 import constants as CONST
 from enums import PlaybackMode, PowerState
@@ -118,3 +119,26 @@ def control_toggle_shuffle_cd():
 
     if STATE['power_state'] is PowerState.Powered:
         display.hard_refresh_top_viewport()
+
+
+def control_bluetooth_device_connected():
+    logger.debug('control_bluetooth_device_connected')
+
+    rfid.stop_thread()
+    radio.mute_radio_and_pause_cd()
+    STATE['playback_mode'] = PlaybackMode.BT
+    STATE['draw_bluetooth_icon'] = True
+    display.hard_refresh_top_viewport()
+    display.main_text('Bluetoothmodus')
+
+
+def control_bluetooth_device_disconnected():
+    logger.debug('control_bluetooth_device_disconnected')
+
+    STATE['playback_mode'] = PlaybackMode.Radio
+    radio.unmute_unpause_current_player()
+    STATE['draw_bluetooth_icon'] = False
+
+    if STATE['power_state'] is PowerState.Powered:
+        display.hard_refresh_top_viewport()
+        rfid.start_thread()
