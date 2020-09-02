@@ -18,6 +18,29 @@
         ]
     },
     {
+        "name": "91,4",
+        "url": "http://stream.berliner-rundfunk.de/brf/mp3-128/internetradio",
+        "skip_strings": [
+            ""
+        ]
+    },
+    {
+        "name": "Antenne Brandenburg",
+        "url": "https://www.antennebrandenburg.de/live.m3u",
+        "skip_strings": [
+            "",
+            "Antenne Brandenburg vom rbb - Livestream"
+        ]
+    },
+    {
+        "name": "Inforadio",
+        "url": "http://inforadio.de/livemp3",
+        "skip_strings": [
+            "",
+            "Inforadio - Alle 20 Minuten Verkehrsservice, News und Wetter"
+        ]
+    },
+    {
         "name": "Deutschlandfunk",
         "url": "https://st01.sslstream.dlf.de/dlf/01/high/aac/stream.aac",
         "skip_strings": [
@@ -34,13 +57,6 @@
     {
         "name": "DLF Nova",
         "url": "https://st03.sslstream.dlf.de/dlf/03/high/aac/stream.aac",
-        "skip_strings": [
-            ""
-        ]
-    },
-    {
-        "name": "91,4",
-        "url": "http://stream.berliner-rundfunk.de/brf/mp3-128/internetradio",
         "skip_strings": [
             ""
         ]

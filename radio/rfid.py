@@ -30,15 +30,15 @@ def _rfid_loop():
     last_stop = 0
     max_cont_fails = 0
 
-    SET_CD_LIB = "25490172055"
+    SET_CD_LIB = CONST.SET_CD_LIB
     write_cd_lib_mode = False
     last_set_cd = None
     last_played_rfid_tag = ""
 
-    while t.name is 'run':
+    while t.name == 'run':
         sleep(2 / CONST.MAX_CONT_FAILS)
 
-        rdr.wait_for_tag()
+        rdr.wait_for_tag(0.5)
         (error, tag_type) = rdr.request()
         if not error:
             (error, uid) = rdr.anticoll()
@@ -97,7 +97,7 @@ def _rfid_loop():
                         STATE['playback_mode'] = PlaybackMode.Unknown
 
 
-                if STATE['playback_mode'] is not PlaybackMode.CD:
+                if STATE['playback_mode'] is not PlaybackMode.CD and STATE['playback_mode'] is not PlaybackMode.BT:
                     last_played_rfid_tag = rfid
                     # TODO: disconnect all bt devices
 

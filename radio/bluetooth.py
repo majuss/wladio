@@ -3,7 +3,7 @@ import threading
 import subprocess
 
 import utils
-import radio
+import control
 import display
 from enums import PlaybackMode, PowerState
 
@@ -36,24 +36,12 @@ def _bluetooth():
         if iface == 'Device1':
             if "Connected" in changed:
                 if changed['Connected']:
-
-                    radio.mute_radio_and_pause_cd()
-                    STATE['playback_mode'] = PlaybackMode.BT
-                    logger.debug('Radio mode set to Bluetooth')
-
-                    STATE['draw_bluetooth_icon'] = True
-                    display.hard_refresh_top_viewport()
-                    display.main_text('Bluetoothmodus eingeschalten')
+                    logger.debug('device connected')
+                    control.control_bluetooth_device_connected()
 
                 else:
                     logger.debug('Radio mode set to Radio')
-                    STATE['playback_mode'] = PlaybackMode.Radio
-                    radio.unmute_unpause_current_player()
-
-                    STATE['draw_bluetooth_icon'] = False
-
-                    if STATE['power_state'] is PowerState.Powered:
-                        display.hard_refresh_top_viewport()
+                    control.control_bluetooth_device_disconnected()
 
         elif iface == 'MediaPlayer1':
             if 'Track' in changed:
