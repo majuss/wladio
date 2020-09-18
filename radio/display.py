@@ -84,7 +84,8 @@ def top_snap(draw, width, height):
 
     sensor_data = sensors.get_data()
 
-    draw.text((0, 4), '{:.1f}°  {:.1f}°'.format(*(sensor_data[0:2])), fill='white', font=font_18)
+    draw.text((0, 4), '{:.1f}°  {:.1f}°'.format(
+        *(sensor_data[0:2])), fill='white', font=font_18)
 
     draw.text((100, 2), '{:02d}:{:02d}'.format(*utils.get_local_hours_minutes()),
               fill='white', font=font_16_seg)
@@ -248,7 +249,8 @@ def forced_text(text, timeout):
 
     logger.debug('forced text: ' + text)
 
-    current_rendered_main = make_text_dict(text, time.time() + timeout, 28, False)
+    current_rendered_main = make_text_dict(
+        text, time.time() + timeout, 28, False)
     forced_visualisation = update_text_line = True
 
 
@@ -261,9 +263,6 @@ def set_pause_or_mute_text(text):
 
 
 def remove_pause_or_mute_text():
-
-
-    
     global current_rendered_main
     current_rendered_main['next'] = 1  # trigers reset to saved main text
 
@@ -280,15 +279,15 @@ def hard_refresh_top_viewport():
 
 
 def enter_standby():
-        logger.debug('enter standby')
+    logger.debug('enter standby')
 
-        display_device.contrast(CONST.BRIGHTNESS_STANDBY)
+    display_device.contrast(CONST.BRIGHTNESS_STANDBY)
 
-        _remove_powered_viewport()
-        _setup_state_standby()
+    _remove_powered_viewport()
+    _setup_state_standby()
 
-        t_sleep(1)
-        virtual.refresh()
+    t_sleep(1)
+    virtual.refresh()
 
 
 def _restart_viewport_thread():
@@ -303,20 +302,20 @@ def _restart_viewport_thread():
 
 
 def leave_standby():
-        logger.debug('leave standby')
-        global viewport_thread
+    logger.debug('leave standby')
+    global viewport_thread
 
-        display_device.contrast(CONST.BRIGHTNESS)
+    display_device.contrast(CONST.BRIGHTNESS)
 
-        _remove_standby_viewport()
+    _remove_standby_viewport()
 
-        current_rendered_main['next'] = time.time()
+    current_rendered_main['next'] = time.time()
 
-        _setup_state_powered()
+    _setup_state_powered()
 
-        virtual.refresh()
-        
-        _restart_viewport_thread()
+    virtual.refresh()
+
+    _restart_viewport_thread()
 
 
 def viewport_loop():
@@ -391,4 +390,3 @@ def initalize():  # 1 PowerState.Powered / 0 PowerState.Standby
         logger.debug('POWER STATE NOT SET')
 
     _restart_viewport_thread()
-

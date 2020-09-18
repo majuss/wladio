@@ -2,6 +2,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import threading
 import socketserver
 import os
+import control
 
 
 DIR_PATH = os.path.dirname(os.path.abspath(__file__))
@@ -24,25 +25,31 @@ class S(BaseHTTPRequestHandler):
         # reaktion anfrage status änderung
 
         self.send_response(204)
+        self.end_headers()
 
         if self.path == '/garage':
-            print("Trigger the relay garage")
+            control.control_garagedoor()
 
-        if self.path == '/driveway':
-            print("Trigger the relay driveway")
+        elif self.path == '/driveway':
+            control.control_drivewaygate()
 
 
 def run(server_class=HTTPServer, handler_class=S, port=50777):
-    with socketserver.TCPServer(("", port), S) as httpd:
-        print("serving at port", port)
-        try:
-            httpd.serve_forever()
-        except KeyboardInterrupt:
-            httpd.server_close()
-            socketserver.socket.close()
+    try:
+        with socketserver.TCPServer(("", port), S) as httpd:
+            print("serving at port", port)
+            try:
+                httpd.serve_forever()
+            except KeyboardInterrupt:
+                httpd.server_close()
+                socketserver.socket.close()
 
-            pass
-        httpd.server_close()
+                pass
+            httpd.server_close()
+    except Exception as e:
+        print('received exception in http thread')
+        print(e)
+        os._exit(1)
 
 
 server_thread = threading.Thread(target=run)

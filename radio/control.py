@@ -1,3 +1,4 @@
+import RPi.GPIO as GPIO
 import subprocess
 from time import sleep
 
@@ -6,6 +7,7 @@ import display
 import radio
 import speakers
 import bluetooth
+import power
 import rfid
 import utils
 import constants as CONST
@@ -15,6 +17,13 @@ from enums import PlaybackMode, PowerState
 logger = utils.create_logger(__name__)
 STATE = utils.state()
 
+GPIO.setmode(GPIO.BCM)
+
+GPIO.setup(CONST.GARAGE_RELAY, GPIO.OUT)
+GPIO.output(CONST.GARAGE_RELAY, GPIO.HIGH)
+
+GPIO.setup(CONST.DRIVEWAY_RELAY, GPIO.OUT)
+GPIO.output(CONST.DRIVEWAY_RELAY, GPIO.HIGH)
 
 
 def control_up(diff):
@@ -49,12 +58,17 @@ def control_next():
 
     # im after file track change no metadata is available
     if STATE['playback_mode'] is PlaybackMode.Radio:
-        logger.debug('set main text to' + radio.get_stream_name())
+        logger.debug('set main text to ' + radio.get_stream_name())
         display.main_text(radio.get_stream_name())
 
 
 def control_pause_toggle():
     logger.debug('control_pause_toggle')
+
+    display.forced_text('SAVE TRACE', 10)
+    radio.save_mpv_trace()
+
+    return
 
     player = radio.get_player()
     if player is None:
@@ -142,3 +156,43 @@ def control_bluetooth_device_disconnected():
     if STATE['power_state'] is PowerState.Powered:
         display.hard_refresh_top_viewport()
         rfid.start_thread()
+
+
+def control_drivewaygate():
+    logger.debug('control_drivewaygate')
+
+    power.stop_thread()
+
+    if STATE['power_state'] is PowerState.Standby:
+        display.leave_standby()
+
+    display.forced_text('Einfahrt auf/zu', CONST.DOORS_TIMEOUT)
+    GPIO.output(CONST.DRIVEWAY_RELAY, GPIO.LOW)
+    sleep(1)
+    GPIO.output(CONST.DRIVEWAY_RELAY, GPIO.HIGH)
+
+    if STATE['power_state'] is PowerState.Standby:
+        sleep(CONST.DOORS_TIMEOUT)
+        display.enter_standby()
+
+    power.start_thread()
+
+
+def control_garagedoor():
+    logger.debug('control_garagedoor')
+
+    power.stop_thread()
+
+    if STATE['power_state'] is PowerState.Standby:
+        display.leave_standby()
+
+    display.forced_text('Garagentor auf/zu', CONST.DOORS_TIMEOUT)
+    GPIO.output(CONST.GARAGE_RELAY, GPIO.LOW)
+    sleep(1)
+    GPIO.output(CONST.GARAGE_RELAY, GPIO.HIGH)
+
+    if STATE['power_state'] is PowerState.Standby:
+        sleep(CONST.DOORS_TIMEOUT)
+        display.enter_standby()
+
+    power.start_thread()

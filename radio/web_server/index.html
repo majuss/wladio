@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Tore bedienen</title>
+
+</html>
+<style>
+    body {
+        margin: 0vw;
+        padding: 0vw;
+    }
+
+    .content {
+        width: 100vw;
+        margin: auto;
+    }
+
+    .myButton {
+        border: 0px;
+        background-color: #44c767;
+        display: inline-block;
+        cursor: pointer;
+        color: #ffffff;
+        font-family: Arial;
+        font-size: 28px;
+        font-weight: bold;
+        margin: 0px;
+        margin-top: 5vh;
+        margin-bottom: 5vh;
+        width: 80vw;
+        margin-left: 10vw;
+        margin-right: 10vw;
+        height: 40vh;
+        text-decoration: none;
+        text-shadow: 0px 1px 0px #2f6627;
+    }
+
+    .myButton:disabled {
+        background-color: #000;
+        cursor: wait;
+    }
+
+    .myButton:hover {
+        background-color: #5cbf2a;
+    }
+</style>
+
+<html>
+
+<body>
+    <div class="content">
+        <button id="garage-btn" class=myButton>Garage betätigen</button>
+        <button id="driveway-btn" class=myButton>Einfahrt betätigen</button>
+    </div>
+</body>
+
+<script>
+    const garage_button = document.getElementById('garage-btn');
+
+    garage_button.addEventListener('click', async (event) => {
+        garage_button.disabled = true
+        try {
+            const response = await fetch('garage', {
+                method: 'post',
+                body: {
+                    "foo": "bar"
+                }
+            });
+            console.log('Completed!', response);
+        } catch (err) {
+            console.error(`Error: ${err}`);
+        }
+        setTimeout(() => driveway_button.disabled = false, 5 * 1000);
+    });
+
+
+    const driveway_button = document.getElementById('driveway-btn');
+
+    driveway_button.addEventListener('click', async (event) => {
+        driveway_button.disabled = true
+        try {
+            const response = await fetch('driveway', {
+                method: 'post',
+                body: {
+                    "foo": "bar"
+                }
+            });
+            console.log('Completed!', response);
+        } catch (err) {
+            console.error(`Error: ${err}`);
+        }
+        setTimeout(() => driveway_button.disabled = false, 5 * 1000);
+    });
+</script>
+
+</html>

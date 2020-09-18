@@ -1,11 +1,9 @@
 import RPi.GPIO as GPIO
 from time import sleep, time
 
-from enums import PowerState
-from control import *
+import control
 import utils
-import display
-import power
+
 import constants as CONST
 
 logger = utils.create_logger(__name__)
@@ -34,69 +32,32 @@ GPIO.setup(BUTTON_MAPPING['vol_clk'], GPIO.IN, GPIO.PUD_DOWN)
 GPIO.setup(BUTTON_MAPPING['vol_dt'], GPIO.IN, GPIO.PUD_DOWN)
 GPIO.setup(BUTTON_MAPPING['vol_sw'], GPIO.IN, GPIO.PUD_UP)
 
-GPIO.setup(CONST.GARAGE_RELAY, GPIO.OUT)
-GPIO.output(CONST.GARAGE_RELAY, GPIO.HIGH)
-
-GPIO.setup(CONST.DRIVEWAY_RELAY, GPIO.OUT)
-GPIO.output(CONST.DRIVEWAY_RELAY, GPIO.HIGH)
-
 
 def callback_next_btn(channel):
-    control_next()
+    control.control_next()
 
 
 def callback_prev_btn(channel):
-    control_prev()
+    control.control_prev()
 
 
 def callback_pause_btn(channel):
-    control_pause_toggle()
+    control.control_pause_toggle()
 
 
 def callback_garage_door(channel):
     logger.debug('garage door pressed')
-
-    power.stop_thread()
-
-    if STATE['power_state'] is PowerState.Standby:
-        display.leave_standby()
-
-    display.forced_text('Garagentor auf/zu', CONST.DOORS_TIMEOUT)
-    GPIO.output(CONST.GARAGE_RELAY, GPIO.LOW)
-    sleep(1)
-    GPIO.output(CONST.GARAGE_RELAY, GPIO.HIGH)
-
-    if STATE['power_state'] is PowerState.Standby:
-        sleep(CONST.DOORS_TIMEOUT)
-        display.enter_standby()
-
-    power.start_thread()
+    control.control_garagedoor()
 
 
 def callback_driveway(channel):
     logger.debug('drive way button pressed')
-
-    power.stop_thread()
-
-    if STATE['power_state'] is PowerState.Standby:
-        display.leave_standby()
-
-    display.forced_text('Einfahrt auf/zu', CONST.DOORS_TIMEOUT)
-    GPIO.output(CONST.DRIVEWAY_RELAY, GPIO.LOW)
-    sleep(1)
-    GPIO.output(CONST.DRIVEWAY_RELAY, GPIO.HIGH)
-
-
-    if STATE['power_state'] is PowerState.Standby:
-        sleep(CONST.DOORS_TIMEOUT)
-        display.enter_standby()
-
-    power.start_thread()
+    control.control_drivewaygate()
 
 
 def callback_unknown(channel):
     logger.debug('shuffle cd button pressed')
-    control_toggle_shuffle_cd()
+    control.control_toggle_shuffle_cd()
 
 
 # globals for wheel
@@ -118,13 +79,13 @@ def callback_vol(null):
         else:
             direction = False
         if direction:
-            control_up(CONST.VOL_KNOB_SPEED)  # volume change up
+            control.control_up(CONST.VOL_KNOB_SPEED)  # volume change up
         else:
-            control_down(-CONST.VOL_KNOB_SPEED)  # volume change down
+            control.control_down(-CONST.VOL_KNOB_SPEED)  # volume change down
 
 
 def callback_vol_sw(null):
-    control_mute_toggle()  # volume mute toggle
+    control.control_mute_toggle()  # volume mute toggle
 
 
 GPIO.add_event_detect(BUTTON_MAPPING['next_btn'], GPIO.FALLING,
