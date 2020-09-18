@@ -29,6 +29,7 @@
         "url": "https://www.antennebrandenburg.de/live.m3u",
         "skip_strings": [
             "",
+            "Antenne Brandenburg - Livestream",
             "Antenne Brandenburg vom rbb - Livestream"
         ]
     },

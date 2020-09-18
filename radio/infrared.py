@@ -2,7 +2,7 @@ import threading
 import lirc
 
 
-from control import *
+import control as control
 import constants as CONST
 
 
@@ -32,22 +32,22 @@ def _infrared_loop():
 
         # handle IR commands
         if 'up' == code:
-            control_up(CONST.VOLUME_CHANGE_DIFF)
+            control.control_up(CONST.VOLUME_CHANGE_DIFF)
 
         elif 'down' == code:
-            control_down(-CONST.VOLUME_CHANGE_DIFF)
+            control.control_down(-CONST.VOLUME_CHANGE_DIFF)
 
         elif 'next' == code:
-            control_next()
+            control.control_next()
 
         elif 'prev' == code:
-            control_prev()
+            control.control_prev()
 
         elif 'menu' == code:
-            control_mute_toggle()
+            control.control_mute_toggle()
 
         elif 'play' == code:
-            control_pause_toggle()
+            control.control_pause_toggle()
 
 
 def start_thread():

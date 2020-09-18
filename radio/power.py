@@ -5,7 +5,7 @@ from time import sleep
 import utils
 import infrared
 import rfid
-from control import *
+import control
 from enums import PowerState
 
 power_thread = None
@@ -33,12 +33,12 @@ def _power_loop():
 
             rfid.start_thread()
             infrared.start_thread()
-            control_leave_standby()
+            control.control_leave_standby()
 
         if voltage < 6 and STATE['power_state'] is not PowerState.Standby: # enter standby
             STATE['power_state'] = PowerState.Standby
 
-            control_enter_standby()
+            control.control_enter_standby()
             infrared.stop_thread()
             rfid.stop_thread()
         sleep(0.5)

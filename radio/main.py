@@ -12,7 +12,7 @@ import utils as utils
 import display as display
 from enums import *
 
-from control import *
+import control
 import weather as weather
 import infrared as infrared
 import rfid as rfid
@@ -20,6 +20,7 @@ import bluetooth as bluetooth
 import radio as radio
 import power as power
 import speakers as speakers
+import web_server.backend
 
 
 logger = utils.create_logger('main')
@@ -28,6 +29,7 @@ STATE = utils.state()
 
 # Load stations and music library file
 stations, music_lib = utils.openFiles()
+
 
 def get_station_object_by_player(player, stations):
     return stations[player.playlist_pos]

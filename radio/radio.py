@@ -1,3 +1,6 @@
+import gc
+import os
+import signal
 import mpv
 import time
 
@@ -15,10 +18,92 @@ STATE = utils.state()
 radioStations, music_lib = utils.openFiles()
 
 
-radioPlayer = mpv.MPV()
+mpv_msgs = []
+
+
+def mpv_debug_logger(level, prefix, text):
+    now = time.time()
+    while len(mpv_msgs):
+        mpv_msg = mpv_msgs[0]
+
+        diff = now - mpv_msg['t']
+
+        if 60 * 5 < diff:
+            mpv_msgs.pop(0)
+        else:
+            break
+
+    mpv_msgs.append({'t': time.time(), 'm': str(level) +
+                     ' ' + str(prefix) + ' ' + str(text)})
+
+
+radioPlayer = mpv.MPV(
+    demuxer_max_back_bytes=100 * 1000 * 1000,
+    demuxer_max_bytes=10*1000*1000,
+    demuxer_donate_buffer='no',
+    loop_file='inf',
+    log_handler=mpv_debug_logger)
+radioPlayer.set_loglevel('trace')
+
 radioPlayer.volume = STATE['radio_volume']
 radioPlayer.pause = True
 radioPlayer.command('stop')
+
+
+# debugging start
+
+
+# def radio_callback(event):
+#     print(event)
+# radioPlayer.register_event_callback(radio_callback)
+
+
+# @radioPlayer.event_callback('end-file')
+# def my_handler(event):
+#     logger.debug('radioPlayer event end-file:')
+#     print(event)
+
+
+# gc.set_debug( gc.DEBUG_STATS) # | gc.DEBUG_LEAK)
+gc.enable()
+
+
+def handler(signum, frame):
+    logger.debug('SIGUSR1 debug info radioPlayer')
+
+    logger.debug('collected trace msgs: ' + str(len(mpv_msgs)))
+
+    logger.debug(
+        'volume pause mute core_idle idle_active demuxer_cache_duration demuxer_cache_time')
+    logger.debug(str(radioPlayer.volume))
+    logger.debug(str(radioPlayer.pause))
+    logger.debug(str(radioPlayer.mute))
+    logger.debug(str(radioPlayer.core_idle))
+    logger.debug(str(radioPlayer.idle_active))
+    logger.debug(str(radioPlayer.demuxer_cache_duration))
+    logger.debug(str(radioPlayer.demuxer_cache_time))
+
+    gc.collect()
+    logger.debug('gc.garbage length: ' + str(len(gc.garbage)))
+    logger.debug('gc enabled: ' + str(gc.isenabled()))
+    logger.debug('gc counts: ' + str(gc.get_count()))
+
+    logger.debug('UNCOLLECTABLE objects start')
+
+    for obj in gc.garbage:
+        try:
+            logger.debug(str(obj))
+        except:
+            pass
+
+    logger.debug('UNCOLLECTABLE objects end')
+
+
+# Set the signal handler and a 5-second alarm
+signal.signal(signal.SIGUSR1, handler)
+
+
+# debugging end
 
 
 cdPlayer = mpv.MPV(loop_playlist='inf')
@@ -29,8 +114,34 @@ cdPlayer.volume = CONST.CD_PLAYER_START_VOL
 for station in radioStations:
     radioPlayer.playlist_append(station['url'])
 
+last_trace_save = 0
+# dump_mpv_trace
+def save_mpv_trace():
+    logger.debug('save mpv trace')
+    global last_trace_save
+    global radioPlayer
 
-# handels
+    diff = time.time() - last_trace_save
+
+    if diff < 60:
+        logger.debug('save was save less than a minute ago')
+        return
+
+    last_trace_save = time.time()
+
+    # Open a file with access mode 'a'
+    with open('/home/pi/mpv_trace_at_' + str(time.time()) + '.txt', 'a') as file_object:
+        for mpv_obj in mpv_msgs:
+            file_object.write(str(mpv_obj['t']) + ' ' + mpv_obj['m'] + '\n')
+        file_object.close()
+
+    radioPlayer.pause = not radioPlayer.pause
+
+    time.sleep(1)
+
+    radioPlayer.pause = not radioPlayer.pause
+
+
 
 def next():
     logger.debug('next')
@@ -195,7 +306,6 @@ def leave_standby():
     STATE['paused'] = STATE['muted'] = False
 
 
-
 def get_player():
     """return current active player acording to state"""
 
@@ -242,7 +352,8 @@ def _get_current_station_name():
         return radioStations[radioPlayer.playlist_pos]['name']
     except:
         pass
-        logger.debug('no station name found for position ' + str(radioPlayer.playlist_pos))
+        logger.debug('no station name found for position ' +
+                     str(radioPlayer.playlist_pos))
         return 'NO STATION FOUND'
 
 
@@ -279,8 +390,6 @@ def _check_radio_pause():
     if STATE['paused'] is False or STATE['muted'] is False:
         diff = time.time() - STATE['radio_last_pause']
 
-        if CONST.RADIO_MAX_PAUSE_DIFF < diff: # reset radio playback to live
+        if CONST.RADIO_MAX_PAUSE_DIFF < diff:  # reset radio playback to live
             radioPlayer.playlist_pos = STATE['radio_playlist_position']
             # print(diff)
-
-
