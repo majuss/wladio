@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8" />
-    <title>Tore bedienen</title>
+    <title>Radio Control</title>
 
 </html>
 <style>
@@ -14,27 +14,27 @@
 
     .content {
         width: 100vw;
-        margin: auto;
+        height: 100vh;
     }
 
     .myButton {
         border: 0px;
         background-color: #44c767;
-        display: inline-block;
+        display: block;
         cursor: pointer;
         color: #ffffff;
         font-family: Arial;
         font-size: 10vh;
         font-weight: bold;
-        margin: 0px;
-        margin-top: 5vh;
-        margin-bottom: 5vh;
-        width: 80vw;
-        margin-left: 10vw;
-        margin-right: 10vw;
-        height: 40vh;
+        margin-left: 1vw;
+        margin-right: 1vw;
+        margin-top: 1vh;
+        margin-bottom: 1vh;
+        width: 48vw;
+        height: 23vh;
         text-decoration: none;
         text-shadow: 0px 1px 0px #2f6627;
+        float: left;
     }
 
     .myButton:disabled {
@@ -51,17 +51,20 @@
 
 <body>
     <div class="content">
-        <button data-path="/garage" class="myButton">Garage betätigen</button>
-        <button data-path="/driveway" class="myButton">Einfahrt betätigen</button>
+        <button data-path="/radio/prev" class="myButton">prev</button>
+        <button data-path="/radio/next" class="myButton">next</button>
+        <button data-path="/radio/vol-up" class="myButton">vol up</button>
+        <button data-path="/radio/vol-down" class="myButton">vol down</button>
+        <button data-path="/radio/mute" class="myButton">mute</button>
+        <button data-path="/radio/pause" class="myButton">pause</button>
     </div>
 </body>
 
 <script>
-    for (const button of document.querySelectorAll('DIV.content > BUTTON')) {
+    for (const button of document.querySelectorAll('DIV > BUTTON')) {
         button.addEventListener('click', async (event) => {
-            button.disabled = true
             try {
-                const response = await fetch(button.dataset.path, {
+                const response = fetch(button.dataset.path, {
                     method: 'POST',
                     body: ''
                 });
@@ -69,7 +72,6 @@
             } catch (err) {
                 console.error(`Error: ${err}`);
             }
-            setTimeout(() => button.disabled = false, 5 * 1000);
         });
     }
 </script>
