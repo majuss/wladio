@@ -52,23 +52,34 @@ def control_prev():
         display.main_text(radio.get_stream_name())
 
 
+def control_real_prev():
+    logger.debug('control_real_prev')
+    radio.real_prev()
+
+    if STATE['playback_mode'] is PlaybackMode.Radio:
+        display.main_text(radio.get_stream_name())
+
+
 def control_next():
     logger.debug('control_next')
     radio.next()
 
-    # im after file track change no metadata is available
     if STATE['playback_mode'] is PlaybackMode.Radio:
-        logger.debug('set main text to ' + radio.get_stream_name())
         display.main_text(radio.get_stream_name())
+
+
+def control_skip_forward():
+    logger.debug('control_skip_forward')
+    radio.skip_forward()
+
+
+def control_skip_backward():
+    logger.debug('control_skip_backward')
+    radio.skip_backward()
 
 
 def control_pause_toggle():
     logger.debug('control_pause_toggle')
-
-    display.forced_text('SAVE TRACE', 10)
-    radio.save_mpv_trace()
-
-    return
 
     player = radio.get_player()
     if player is None:
@@ -196,3 +207,8 @@ def control_garagedoor():
         display.enter_standby()
 
     power.start_thread()
+
+
+def control_save_trace():
+    display.forced_text('SAVE TRACE', 10)
+    radio.save_mpv_trace()
