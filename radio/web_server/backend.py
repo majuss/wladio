@@ -42,7 +42,7 @@ class S(BaseHTTPRequestHandler):
             control.control_next()
 
         elif self.path == '/radio/prev':
-            control.control_prev()
+            control.control_real_prev()
 
         elif self.path == '/radio/vol-up':
             control.control_up(CONST.VOL_KNOB_SPEED)
@@ -55,6 +55,12 @@ class S(BaseHTTPRequestHandler):
 
         elif self.path == '/radio/pause':
             control.control_pause_toggle()
+
+        elif self.path == '/radio/skip/forward':
+            control.control_skip_forward()
+
+        elif self.path == '/radio/skip/backward':
+            control.control_skip_backward()
 
 
 def run(server_class=HTTPServer, handler_class=S, port=50777):

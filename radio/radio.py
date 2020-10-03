@@ -116,6 +116,8 @@ for station in radioStations:
 
 last_trace_save = 0
 # dump_mpv_trace
+
+
 def save_mpv_trace():
     logger.debug('save mpv trace')
     global last_trace_save
@@ -124,7 +126,7 @@ def save_mpv_trace():
     diff = time.time() - last_trace_save
 
     if diff < 60:
-        logger.debug('save was save less than a minute ago')
+        logger.debug('saved less than a minute ago')
         return
 
     last_trace_save = time.time()
@@ -142,7 +144,6 @@ def save_mpv_trace():
     radioPlayer.pause = not radioPlayer.pause
 
 
-
 def next():
     logger.debug('next')
 
@@ -156,6 +157,22 @@ def next():
         player.playlist_pos = 0
     else:
         player.playlist_next()
+
+    if STATE['playback_mode'] is PlaybackMode.Radio:
+        STATE['radio_playlist_position'] = player.playlist_pos
+
+
+def real_prev():
+    logger.debug('real_prev')
+
+    player = get_player()
+    if player is None:
+        return
+
+    if player.playlist_pos - 1 is -1:
+        player.playlist_pos = len(player.playlist) - 1
+    else:
+        player.playlist_prev()
 
     if STATE['playback_mode'] is PlaybackMode.Radio:
         STATE['radio_playlist_position'] = player.playlist_pos
@@ -179,13 +196,27 @@ def prev():
     if 2 < diff_time and diff_time < 10:  # only when two button presses occure in a time frame from greater 2 and smaller 10 seconds
         player.seek(-15)
     elif diff_time < 2:
-        if player.playlist_pos - 1 is -1:
-            player.playlist_pos = len(player.playlist) - 1
-        else:
-            player.playlist_prev()
+        real_prev()
 
-        if STATE['playback_mode'] is PlaybackMode.Radio:
-            STATE['radio_playlist_position'] = player.playlist_pos
+
+def skip_forward():
+    logger.debug('skip_forward')
+
+    player = get_player()
+    if player is None:
+        return
+
+    player.seek(10)
+
+
+def skip_backward():
+    logger.debug('skip_backward')
+
+    player = get_player()
+    if player is None:
+        return
+
+    player.seek(-10)
 
 
 def up(diff):
