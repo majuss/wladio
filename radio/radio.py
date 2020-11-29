@@ -1,5 +1,4 @@
 import gc
-import os
 import signal
 import mpv
 import time
@@ -7,7 +6,8 @@ import time
 import utils as utils
 import constants as CONST
 
-from enums import *
+# from enums import *
+from enums import PlaybackMode
 
 
 logger = utils.create_logger(__name__)
@@ -93,7 +93,8 @@ def handler(signum, frame):
     for obj in gc.garbage:
         try:
             logger.debug(str(obj))
-        except:
+        except Exception as e:
+            logger.debug('Error in gc.garbage loop: {}'.format(e))
             pass
 
     logger.debug('UNCOLLECTABLE objects end')
@@ -193,7 +194,8 @@ def prev():
     diff_time = time.time() - last_prev
     last_prev = time.time()
 
-    if 2 < diff_time and diff_time < 10:  # only when two button presses occure in a time frame from greater 2 and smaller 10 seconds
+    if 2 < diff_time and diff_time < 10:  # only when two button presses occure in a \
+        # time frame from greater 2 and smaller 10 seconds
         player.seek(-15)
     elif diff_time < 2:
         real_prev()
@@ -371,9 +373,9 @@ def get_stream_name():
             txts = txt + ' ' + ' - '.join(txts)
 
             return txts
-        except:
+        except Exception as e:
             pass
-            logger.error('Couldnt get CD tag')
+            logger.error('Couldnt get CD tag: {}'.format(e))
 
     return 'No title found'
 
@@ -381,10 +383,9 @@ def get_stream_name():
 def _get_current_station_name():
     try:
         return radioStations[radioPlayer.playlist_pos]['name']
-    except:
+    except Exception as e:
         pass
-        logger.debug('no station name found for position ' +
-                     str(radioPlayer.playlist_pos))
+        logger.debug('no station name found for position: {} {}'.format(str(radioPlayer.playlist_pos), e))
         return 'NO STATION FOUND'
 
 

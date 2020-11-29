@@ -3,7 +3,6 @@ import requests
 import xmltodict
 import datetime
 import time
-import sys
 
 import constants as CONST
 import utils
@@ -59,7 +58,7 @@ weather_thread = None
 
 def _weather_loop():
     t = threading.current_thread()
-    while t.name is 'run':
+    while t.name == 'run':
         rain = get_weather()
         # rain = True # comment to use real data
         STATE['draw_rain_cloud_icon'] = rain

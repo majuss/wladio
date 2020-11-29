@@ -8,7 +8,7 @@ SCROLL_SPEED = 4
 PWR_DEBOUNCE = 0.7
 RELAIS_DELAY = 1
 
-#Pathes and files
+# Pathes and files
 MUSIC_LIB_PATH = '/home/pi/music_lib/'
 STATIONS_FILE = 'stations.json'
 MUSIC_LIB_FILE = 'music_lib.json'
