@@ -7,10 +7,10 @@ import sys
 
 import buttons
 
-import constants as CONST
 import utils as utils
 import display as display
-from enums import *
+
+from enums import PlaybackMode, PowerState
 
 import control
 import weather as weather

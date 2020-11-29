@@ -20,10 +20,10 @@ def _infrared_loop():
     while True:
         codeIR = lirc.nextcode()  # call blocks until IR commands was received
 
-        if t.name is 'stop':
+        if t.name == 'stop':
             break
 
-        if 0 is len(codeIR):  # empty array means repeat same code as befores code
+        if 0 == len(codeIR):  # empty array means repeat same code as befores code
             if last_code not in ['up', 'down']:  # for up down we want to proceed
                 continue
             codeIR = [last_code]

@@ -85,17 +85,15 @@ def _rfid_loop():
                         display.forced_text('place cd card', 5)
                         STATE['playback_mode'] = PlaybackMode.Unknown
 
-
                 elif write_cd_lib_mode is False:
                     if rfid not in music_lib:
                         continue
 
                     cd_path = CONST.MUSIC_LIB_PATH + music_lib[rfid]
 
-                    if rfid != last_played_rfid_tag: # tag changed
+                    if rfid != last_played_rfid_tag:  # tag changed
                         last_stop = 0
                         STATE['playback_mode'] = PlaybackMode.Unknown
-
 
                 if STATE['playback_mode'] is not PlaybackMode.CD and STATE['playback_mode'] is not PlaybackMode.BT:
                     last_played_rfid_tag = rfid
