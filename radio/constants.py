@@ -8,13 +8,13 @@ SCROLL_SPEED = 4
 PWR_DEBOUNCE = 0.7
 RELAIS_DELAY = 1
 
-#Pathes and files
+# Pathes and files
 MUSIC_LIB_PATH = '/home/pi/music_lib/'
 STATIONS_FILE = 'stations.json'
 MUSIC_LIB_FILE = 'music_lib.json'
 
 # Player controls
-CD_PLAYER_START_VOL = 30
+CD_PLAYER_START_VOL = 10
 RADIO_MAX_PAUSE_DIFF = 30 * 60
 VOLUME_CHANGE_DIFF = 2
 

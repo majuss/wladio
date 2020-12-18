@@ -13,7 +13,7 @@ from luma.oled.device import ssd1322
 import constants as CONST
 import sensors as sensors
 import utils as utils
-from enums import *
+from enums import DrawType, PowerState
 
 logger = utils.create_logger(__name__)
 STATE = utils.state()
@@ -132,7 +132,8 @@ class Main_Hotspot(hotspot):
     def should_redraw(self):
         global current_rendered_main
         global forced_visualisation
-        # print(self._data['next'], str(time.time()), str(self._data['next'] < time.time()), str(self._data['next'] - time.time()))
+        # print(self._data['next'], str(time.time()), str(self._data['next'] \
+        # < time.time()), str(self._data['next'] - time.time()))
 
         if update_text_line:
             logger.debug('received update text line')
@@ -141,7 +142,7 @@ class Main_Hotspot(hotspot):
         currentTime = time.time()
 
         # as long as we dont need to rerender
-        if (current_rendered_main['next'] is 0) or (currentTime < current_rendered_main['next']):
+        if (current_rendered_main['next'] == 0) or (currentTime < current_rendered_main['next']):
             return False
 
         if current_rendered_main['main_text'] is False:
@@ -181,7 +182,7 @@ class Main_Hotspot(hotspot):
                     data['x'] = 0
                     data['next'] = time.time() + CONST.SCROLL_RETAIN
 
-                elif 0 is data['x']:
+                elif 0 == data['x']:
                     data['next'] = time.time() + CONST.SCROLL_RETAIN
                     data['x'] += CONST.SCROLL_SPEED
 

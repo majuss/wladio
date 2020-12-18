@@ -8,7 +8,7 @@ import os
 
 import constants as CONST
 
-from enums import *
+from enums import PowerState, PlaybackMode
 
 stations = None
 music_lib = None
@@ -16,6 +16,7 @@ with open(CONST.STATIONS_FILE) as stations_file:
     stations = json.load(stations_file)
 with open(CONST.MUSIC_LIB_FILE) as music_lib_file:
     music_lib = json.load(music_lib_file)
+
 
 def openFiles():
     return [stations, music_lib]
@@ -56,7 +57,7 @@ state_object = {
 
     'radio_playlist_position': 0,
     'radio_volume': 25,
-    'radio_last_pause':0,
+    'radio_last_pause': 0,
 
 
     'draw_bluetooth_icon': False,
@@ -69,7 +70,8 @@ try:
 
         state_object['radio_playlist_position'] = conf['station']
         state_object['radio_volume'] = conf['volume']
-except:
+except Exception as e:
+    # logger.debug('{}'.format(e))
     pass
 
 
@@ -78,7 +80,7 @@ def save_radio_conf():
         with open('radio_conf.json', 'w') as outfile:
             json.dump({"station": state_object['radio_playlist_position'],
                        "volume": state_object['radio_volume']}, outfile, indent=4)
-    except:
+    except Exception as e:
         pass
 
 
@@ -93,14 +95,14 @@ def create_logger(name):
         "%(asctime)s %(levelname)s %(name)s | %(message)s"))
 
     logger.addHandler(ch)
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.INFO)
 
     return logger
 
 
+cd_paths_without_id = []
+music_lib_paths = {}
 
-cd_paths_without_id=[]
-music_lib_paths={}
 for path in music_lib.values():
     music_lib_paths[path] = 1
 
@@ -115,12 +117,14 @@ for root, subFolders, files in os.walk(CONST.MUSIC_LIB_PATH):
 
 print(cd_paths_without_id)
 
+
 def get_cd_paths_without_id():
     return cd_paths_without_id
+
 
 def save_music_lib():
     try:
         with open(CONST.MUSIC_LIB_FILE, 'w') as outfile:
             json.dump(music_lib, outfile, indent=4)
-    except:
+    except Exception as e:
         pass

@@ -1,4 +1,7 @@
-import threading
+import utils as utils
+
+logger = utils.create_logger(__name__)
+
 
 class DummySensor:
     def __init__(self):
@@ -9,7 +12,7 @@ class DummySensor:
 
 def init_sensors():
     import board
-    import digitalio
+
     from busio import I2C
     import adafruit_bme280
     import adafruit_bme680
@@ -17,15 +20,17 @@ def init_sensors():
     i2c = I2C(board.SCL, board.SDA)
     bme280 = None
     bme680 = None
-    
+
     try:
         bme280 = adafruit_bme280.Adafruit_BME280_I2C(i2c)
-    except:
+    except Exception as e:
+        logger.debug('Couldnt init BME280: {}'.format(e))
         bme280 = DummySensor()
-    
+
     try:
         bme680 = adafruit_bme680.Adafruit_BME680_I2C(i2c)
-    except:
+    except Exception as e:
+        logger.debug('Couldnt init BME680: {}'.format(e))
         bme680 = DummySensor()
 
     bme280.sea_level_pressure = 1013.25
@@ -59,5 +64,5 @@ bme280, bme680 = init_sensors()
 #         sleep(60)
 
 
-def get_data(): # 280 inside 680 outside
+def get_data():  # 280 inside 680 outside
     return bme280.temperature, bme680.temperature, bme280.humidity, bme680.humidity
