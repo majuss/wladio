@@ -1,0 +1,43 @@
+# without usb soundcard
+
+arecord -l
+**** List of CAPTURE Hardware Devices ****
+
+mpv --audio-device=help
+List of detected audio devices:
+  'auto' (Autoselect device)
+  'alsa' (Default (alsa))
+  'alsa/jack' (JACK Audio Connection Kit)
+  'alsa/default:CARD=Headphones' (bcm2835 Headphones, bcm2835 Headphones/Default Audio Device)
+  'alsa/sysdefault:CARD=Headphones' (bcm2835 Headphones, bcm2835 Headphones/Default Audio Device)
+  'alsa/dmix:CARD=Headphones,DEV=0' (bcm2835 Headphones, bcm2835 Headphones/Direct sample mixing device)
+  'alsa/plughw:CARD=Headphones,DEV=0' (bcm2835 Headphones, bcm2835 Headphones/Hardware device with all software conversions)
+  'alsa/usbstream:CARD=Headphones' (bcm2835 Headphones/USB Stream Output)
+
+
+
+# with usb soundcard
+
+mpv --audio-device=help
+List of detected audio devices:
+  'auto' (Autoselect device)
+  'alsa' (Default (alsa))
+  'alsa/jack' (JACK Audio Connection Kit)
+  'alsa/default:CARD=Headphones' (bcm2835 Headphones, bcm2835 Headphones/Default Audio Device)
+  'alsa/sysdefault:CARD=Headphones' (bcm2835 Headphones, bcm2835 Headphones/Default Audio Device)
+  'alsa/dmix:CARD=Headphones,DEV=0' (bcm2835 Headphones, bcm2835 Headphones/Direct sample mixing device)
+  'alsa/plughw:CARD=Headphones,DEV=0' (bcm2835 Headphones, bcm2835 Headphones/Hardware device with all software conversions)
+  'alsa/usbstream:CARD=Headphones' (bcm2835 Headphones/USB Stream Output)
+  'alsa/default:CARD=Device' (USB Audio Device, USB Audio/Default Audio Device)
+  'alsa/sysdefault:CARD=Device' (USB Audio Device, USB Audio/Default Audio Device)
+  'alsa/front:CARD=Device,DEV=0' (USB Audio Device, USB Audio/Front speakers)
+  'alsa/surround21:CARD=Device,DEV=0' (USB Audio Device, USB Audio/2.1 Surround output to Front and Subwoofer speakers)
+  'alsa/surround40:CARD=Device,DEV=0' (USB Audio Device, USB Audio/4.0 Surround output to Front and Rear speakers)
+  'alsa/surround41:CARD=Device,DEV=0' (USB Audio Device, USB Audio/4.1 Surround output to Front, Rear and Subwoofer speakers)
+  'alsa/surround50:CARD=Device,DEV=0' (USB Audio Device, USB Audio/5.0 Surround output to Front, Center and Rear speakers)
+  'alsa/surround51:CARD=Device,DEV=0' (USB Audio Device, USB Audio/5.1 Surround output to Front, Center, Rear and Subwoofer speakers)
+  'alsa/surround71:CARD=Device,DEV=0' (USB Audio Device, USB Audio/7.1 Surround output to Front, Center, Side, Rear and Woofer speakers)
+  'alsa/iec958:CARD=Device,DEV=0' (USB Audio Device, USB Audio/IEC958 (S/PDIF) Digital Audio Output)
+  'alsa/dmix:CARD=Device,DEV=0' (USB Audio Device, USB Audio/Direct sample mixing device)
+  'alsa/plughw:CARD=Device,DEV=0' (USB Audio Device, USB Audio/Hardware device with all software conversions)
+  'alsa/usbstream:CARD=Device' (USB Audio Device/USB Stream Output)

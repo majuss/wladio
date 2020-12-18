@@ -1,13 +1,14 @@
 import gc
-import os
 import signal
 import mpv
 import time
+import tracemalloc
 
 import utils as utils
 import constants as CONST
 
-from enums import *
+# from enums import *
+from enums import PlaybackMode
 
 
 logger = utils.create_logger(__name__)
@@ -41,9 +42,9 @@ radioPlayer = mpv.MPV(
     demuxer_max_back_bytes=100 * 1000 * 1000,
     demuxer_max_bytes=10*1000*1000,
     demuxer_donate_buffer='no',
-    loop_file='inf',
-    log_handler=mpv_debug_logger)
-radioPlayer.set_loglevel('trace')
+    loop_file='inf')
+#    log_handler=mpv_debug_logger)
+# radioPlayer.set_loglevel('trace')
 
 radioPlayer.volume = STATE['radio_volume']
 radioPlayer.pause = True
@@ -93,14 +94,54 @@ def handler(signum, frame):
     for obj in gc.garbage:
         try:
             logger.debug(str(obj))
-        except:
+        except Exception as e:
+            logger.debug('Error in gc.garbage loop: {}'.format(e))
             pass
 
     logger.debug('UNCOLLECTABLE objects end')
 
 
 # Set the signal handler and a 5-second alarm
-signal.signal(signal.SIGUSR1, handler)
+# signal.signal(signal.SIGUSR1, handler)
+
+first_snapshot = None
+
+
+# def inital_snapshot(signum, frame):
+#     global first_snapshot
+
+#     gc.collect()
+#     first_snapshot = tracemalloc.take_snapshot()
+# signal.signal(signal.SIGUSR1, inital_snapshot)
+
+# def run_tracemalloc(signum, frame):
+
+#     gc.collect()
+#     snapshot = tracemalloc.take_snapshot()
+#     # top_stats = snapshot.statistics('filename', True)
+
+#     # for stat in top_stats:
+#     #     print(stat)
+#     # for line in stat.traceback.format():
+#     #     print(line)
+#     # print('###############################################################################')
+
+
+#     print('####################################')
+#     print('difference')
+
+#     top_stats = snapshot.compare_to(first_snapshot, 'filename', True)
+
+#     unchanged = 0
+#     for stat in top_stats:
+#         if stat.count_diff == 0:
+#             print(stat)
+#         else:
+#             unchanged += 1
+#     print('unchanged blocks ' + str(unchanged))
+
+
+# signal.signal(signal.SIGUSR2, run_tracemalloc)
 
 
 # debugging end
@@ -169,7 +210,7 @@ def real_prev():
     if player is None:
         return
 
-    if player.playlist_pos - 1 is -1:
+    if player.playlist_pos - 1 == -1:
         player.playlist_pos = len(player.playlist) - 1
     else:
         player.playlist_prev()
@@ -193,7 +234,8 @@ def prev():
     diff_time = time.time() - last_prev
     last_prev = time.time()
 
-    if 2 < diff_time and diff_time < 10:  # only when two button presses occure in a time frame from greater 2 and smaller 10 seconds
+    if 2 < diff_time and diff_time < 10:  # only when two button presses occure in a \
+        # time frame from greater 2 and smaller 10 seconds
         player.seek(-15)
     elif diff_time < 2:
         real_prev()
@@ -371,9 +413,9 @@ def get_stream_name():
             txts = txt + ' ' + ' - '.join(txts)
 
             return txts
-        except:
+        except Exception as e:
             pass
-            logger.error('Couldnt get CD tag')
+            logger.error('Couldnt get CD tag: {}'.format(e))
 
     return 'No title found'
 
@@ -381,10 +423,10 @@ def get_stream_name():
 def _get_current_station_name():
     try:
         return radioStations[radioPlayer.playlist_pos]['name']
-    except:
+    except Exception as e:
         pass
-        logger.debug('no station name found for position ' +
-                     str(radioPlayer.playlist_pos))
+        logger.debug('no station name found for position: {} {}'.format(
+            str(radioPlayer.playlist_pos), e))
         return 'NO STATION FOUND'
 
 

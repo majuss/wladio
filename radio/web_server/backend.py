@@ -72,7 +72,7 @@ def run(server_class=HTTPServer, handler_class=S, port=50777):
             except KeyboardInterrupt:
                 httpd.server_close()
                 socketserver.socket.close()
-
+                logger.debug('')
                 pass
             httpd.server_close()
     except Exception as e:

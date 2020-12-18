@@ -18,7 +18,7 @@ device = ssd1322(serial)
 
 def main():
     img_path = os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                            'images', '../../radio/ressources/cloud.png'))
+                                            'images', '../../../radio/ressources/cloud.png'))
     logo = Image.open(img_path).convert("RGBA")
     # fff = Image.new(logo.mode, logo.size, (255,) * 4)
     # draw2 = ImageDraw.Draw(logo)

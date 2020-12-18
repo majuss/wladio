@@ -35,7 +35,7 @@ def _power_loop():
             infrared.start_thread()
             control.control_leave_standby()
 
-        if voltage < 6 and STATE['power_state'] is not PowerState.Standby: # enter standby
+        if voltage < 6 and STATE['power_state'] is not PowerState.Standby:  # enter standby
             STATE['power_state'] = PowerState.Standby
 
             control.control_enter_standby()

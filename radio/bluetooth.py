@@ -5,7 +5,6 @@ import subprocess
 import utils
 import control
 import display
-from enums import PlaybackMode, PowerState
 
 logger = utils.create_logger(__name__)
 STATE = utils.state()
@@ -78,14 +77,14 @@ def _bluetooth_pairable():
     while t.name == 'run':
         try:
             subprocess.call(['bluetoothctl', 'discoverable', 'on'])
-        except:
-            logger.error('bluetoothctl discoverable on failed')
+        except Exception as e:
+            logger.error('bluetoothctl discoverable on failed: {}'.format(e))
         # 3 minutes https://www.linux-magazine.com/Issues/2017/197/Command-Line-bluetoothctl
 
         try:
             subprocess.call(['bluetoothctl', "pairable", 'on'])
-        except:
-            logger('bluetoothctl pairable on failed')
+        except Exception as e:
+            logger('bluetoothctl pairable on failed: {}'.format(e))
 
         logger.debug('renewed pairable')
         sleep(120)

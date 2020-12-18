@@ -140,3 +140,7 @@ dmypy.json
 *.webm
 .DS_Store
 radio_conf.json
+.vscode/
+venv*
+venv_clone/
+venv_39/

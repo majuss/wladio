@@ -1,17 +1,12 @@
-
+# from pympler.tracker import SummaryTracker
+# tracker = SummaryTracker()
 from time import sleep
-
 import threading
 import sys
-
-
 import buttons
-
-import constants as CONST
 import utils as utils
 import display as display
-from enums import *
-
+from enums import PlaybackMode, PowerState
 import control
 import weather as weather
 import infrared as infrared
@@ -21,6 +16,9 @@ import radio as radio
 import power as power
 import speakers as speakers
 import web_server.backend
+
+# import tracemalloc
+# tracemalloc.start(10)
 
 
 logger = utils.create_logger('main')
@@ -75,9 +73,9 @@ def print_tags():
                 display.tag_text(txts)
                 # logger.debug("CD tag is : {}".format(txts))
 
-            except:
+            except Exception as e:
                 pass
-                logger.error("Couldn't get CD tag")
+                logger.error("Couldn't get CD tag: {}".format(e))
 
 
 tag_thread = threading.Thread(target=print_tags)
@@ -101,4 +99,12 @@ def _set_initial_state_and_setup():
 
 _set_initial_state_and_setup()
 
+# while True:
+#     print("now the mem in 100 seks")
+#     sleep(100)
+#     # tracker.print_diff()
+#     print("[ Top 10 ]")
+#     for stat in top_stats[:10]:
+#         print(stat)
+# sleep(100)
 sys.exit(0)
