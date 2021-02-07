@@ -95,7 +95,7 @@ def create_logger(name):
         "%(asctime)s %(levelname)s %(name)s | %(message)s"))
 
     logger.addHandler(ch)
-    logger.setLevel(logging.INFO)
+    logger.setLevel(logging.DEBUG)
 
     return logger
 

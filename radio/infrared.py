@@ -10,7 +10,7 @@ import constants as CONST
 infrared_thread = None
 
 dev = InputDevice("/dev/input/event1")
-
+dev.grab()
 
 def _infrared_loop():
     t = threading.current_thread()

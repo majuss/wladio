@@ -1,6 +1,17 @@
 import utils as utils
+import json
+from requests import get
 
 logger = utils.create_logger(__name__)
+
+feuchtigkeit = "http://192.168.178.57:8123/api/states/sensor.0x00158d000418a7e9_humidity"
+temperatur = "http://192.168.178.57:8123/api/states/sensor.0x00158d000418a7e9_temperature"
+
+headers = {
+    "Authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiI0N2Y0ODVmM2MwYzY0ZmYyYjdiMDAwOWQ5NGNkNjY1YiIsImlhdCI6MTYxMTM2MjEyNywiZXhwIjoxOTI2NzIyMTI3fQ.s8UPUUcfb52e3JpL5difZDWlmOobVQRNk3vEtXkcH6s",
+    "content-type": "application/json"
+}
+
 
 
 class DummySensor:
@@ -12,14 +23,12 @@ class DummySensor:
 
 def init_sensors():
     import board
+    import adafruit_bme280
 
     from busio import I2C
-    import adafruit_bme280
-    import adafruit_bme680
 
     i2c = I2C(board.SCL, board.SDA)
     bme280 = None
-    bme680 = None
 
     try:
         bme280 = adafruit_bme280.Adafruit_BME280_I2C(i2c)
@@ -27,19 +36,12 @@ def init_sensors():
         logger.debug('Couldnt init BME280: {}'.format(e))
         bme280 = DummySensor()
 
-    try:
-        bme680 = adafruit_bme680.Adafruit_BME680_I2C(i2c)
-    except Exception as e:
-        logger.debug('Couldnt init BME680: {}'.format(e))
-        bme680 = DummySensor()
-
     bme280.sea_level_pressure = 1013.25
-    bme680.sea_level_pressure = 1013.25
 
-    return bme280, bme680
+    return bme280
 
 
-bme280, bme680 = init_sensors()
+bme280 = init_sensors()
 
 
 # def sensor_handler():
@@ -65,4 +67,10 @@ bme280, bme680 = init_sensors()
 
 
 def get_data():  # 280 inside 680 outside
-    return bme280.temperature, bme680.temperature, bme280.humidity, bme680.humidity
+    response_feuchtigkeit = get(feuchtigkeit, headers=headers)
+    data_feuchtigkeit = json.loads(response_feuchtigkeit.text)['state']
+
+    response_temperatur = get(temperatur, headers=headers)
+    data_temperatur = json.loads(response_temperatur.text)['state']
+
+    return bme280.temperature, float(data_temperatur), bme280.humidity, float(data_feuchtigkeit)
