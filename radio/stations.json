@@ -1,7 +1,7 @@
 [
     {
         "name": "Fritz",
-        "url": "http://rbb-fritz-live.cast.addradio.de/rbb/fritz/live/mp3/128/stream.mp3",
+        "url": "https://www.fritz.de/live.m3u",
         "skip_strings": [
             "It’s Fritz",
             "Fritz vom rbb",
@@ -10,7 +10,7 @@
     },
     {
         "name": "RadioEins",
-        "url": "http://rbb-radioeins-live.cast.addradio.de/rbb/radioeins/live/mp3/128/stream.mp3",
+        "url": "https://www.radioeins.de/live.m3u",
         "skip_strings": [
             "radioeins vom rbb",
             "nur für Erwachsene",
