@@ -18,8 +18,10 @@ ina.configure()
 
 
 if 6 < ina.voltage():
+    print('initial power state is powered')
     STATE['power_state'] = PowerState.Powered
 else:
+    print('initial power state is standby')
     STATE['power_state'] = PowerState.Standby
 
 

@@ -80,6 +80,7 @@ def _bluetooth_pairable():
         except Exception as e:
             logger.error('bluetoothctl discoverable on failed: {}'.format(e))
         # 3 minutes https://www.linux-magazine.com/Issues/2017/197/Command-Line-bluetoothctl
+        # pairing https://github.com/khvzak/bluez-tools/issues/22#issuecomment-358047263
 
         try:
             subprocess.call(['bluetoothctl', "pairable", 'on'])
