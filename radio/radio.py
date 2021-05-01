@@ -154,6 +154,7 @@ cdPlayer.volume = CONST.CD_PLAYER_START_VOL
 # add stream urls to radio playlist
 for station in radioStations:
     radioPlayer.playlist_append(station['url'])
+logger.debug('number of playlists loaded: ' + str(len(radioPlayer.playlist)))
 
 last_trace_save = 0
 # dump_mpv_trace
@@ -194,13 +195,22 @@ def next():
 
     playlist_items = len(player.playlist)
 
-    if player.playlist_pos + 1 is playlist_items:
-        player.playlist_pos = 0
-    else:
-        player.playlist_next()
-
     if STATE['playback_mode'] is PlaybackMode.Radio:
-        STATE['radio_playlist_position'] = player.playlist_pos
+        playlist_position = STATE['radio_playlist_position']
+        playlist_position += 1
+
+        if playlist_position is playlist_items:
+            playlist_position = 0
+
+        player.playlist_pos = playlist_position
+
+        STATE['radio_playlist_position'] = playlist_position
+
+    if STATE['playback_mode'] is PlaybackMode.CD:
+        if player.playlist_pos + 1 is playlist_items:
+            player.playlist_pos = 0
+        else:
+            player.playlist_next()
 
 
 def real_prev():
@@ -210,13 +220,22 @@ def real_prev():
     if player is None:
         return
 
-    if player.playlist_pos - 1 == -1:
-        player.playlist_pos = len(player.playlist) - 1
-    else:
-        player.playlist_prev()
-
     if STATE['playback_mode'] is PlaybackMode.Radio:
-        STATE['radio_playlist_position'] = player.playlist_pos
+        playlist_position = STATE['radio_playlist_position']
+        playlist_position -= 1
+
+        if playlist_position is -1:
+            playlist_position = len(player.playlist) - 1
+
+        player.playlist_pos = playlist_position
+
+        STATE['radio_playlist_position'] = playlist_position
+
+    if STATE['playback_mode'] is PlaybackMode.CD:
+        if player.playlist_pos - 1 == -1:
+            player.playlist_pos = len(player.playlist) - 1
+        else:
+            player.playlist_prev()
 
 
 # when was prev last pressed?
@@ -372,6 +391,9 @@ def leave_standby():
     if STATE['playback_mode'] is PlaybackMode.Radio:
         radioPlayer.playlist_pos = STATE['radio_playlist_position']
         radioPlayer.mute = radioPlayer.pause = False
+
+        logger.debug('unmute unpause, play station ' +
+                     str(radioPlayer.playlist_pos))
 
     elif STATE['playback_mode'] is PlaybackMode.CD:
         cdPlayer.mute = cdPlayer.pause = False

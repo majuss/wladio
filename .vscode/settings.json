@@ -1,4 +1,3 @@
 {
-    "python.languageServer": "Pylance",
-    "python.pythonPath": "venv/bin/python"
+    "python.languageServer": "Pylance"
 }
