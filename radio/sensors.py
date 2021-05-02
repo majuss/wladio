@@ -13,7 +13,6 @@ headers = {
 }
 
 
-
 class DummySensor:
     def __init__(self):
         self.temperature = 99.9
@@ -73,4 +72,17 @@ def get_data():  # 280 inside 680 outside
     response_temperatur = get(temperatur, headers=headers)
     data_temperatur = json.loads(response_temperatur.text)['state']
 
-    return bme280.temperature, float(data_temperatur), bme280.humidity, float(data_feuchtigkeit)
+    # could be 'unavailable'
+    try:
+        data_temperatur = float(data_temperatur)
+    except Exception as e:
+        logger.debug('temp sensor: {}'.format(data_temperatur))
+        data_temperatur = 99
+
+    try:
+        data_feuchtigkeit = float(data_feuchtigkeit)
+    except Exception as e:
+        logger.debug('humidity sensor, got: {}'.format(data_feuchtigkeit))
+        data_feuchtigkeit = -1
+
+    return bme280.temperature, data_temperatur, bme280.humidity, data_feuchtigkeit
