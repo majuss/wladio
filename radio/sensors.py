@@ -22,7 +22,7 @@ class DummySensor:
 
 def init_sensors():
     import board
-    import adafruit_bme280
+    from adafruit_bme280 import basic as adafruit_bme280
 
     from busio import I2C
 
@@ -30,7 +30,7 @@ def init_sensors():
     bme280 = None
 
     try:
-        bme280 = adafruit_bme280.Adafruit_BME280_I2C(i2c)
+        bme280 = adafruit_bme280.Adafruit_BME280_I2C(i2c, address=0x77)
     except Exception as e:
         logger.debug('Couldnt init BME280: {}'.format(e))
         bme280 = DummySensor()
