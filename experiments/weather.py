@@ -4,6 +4,7 @@ import xmltodict
 import datetime
 import time
 import sys
+import json
 
 import constants as CONST
 import utils
@@ -18,37 +19,46 @@ coordinates = {
     "msl": str(CONST.ELEV),
 }
 
+
 def parse_datetime(dt_str):
     """Parse datetime."""
-    return time.mktime(datetime.datetime.strptime(dt_str, "%Y-%m-%dT%H:%M:%S%z").timetuple())
+    return time.mktime(
+        datetime.datetime.strptime(dt_str, "%Y-%m-%dT%H:%M:%S%z").timetuple()
+    )
 
 
 def get_weather():
     """Calls metno API for weather forecast and returns True/False depending on precipitation"""
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:89.0) Gecko/20100101 Firefox/89.0"
+    }
     r = requests.get(
-        'https://api.met.no/weatherapi/locationforecast/1.9/', params=coordinates)
-    data = xmltodict.parse(r.text)["weatherdata"]
+        "https://api.met.no/weatherapi/locationforecast/2.0?lat={}&lon={}".format(
+            CONST.LAT, CONST.LONG
+        ),
+        headers=headers,
+    )
 
-    c = 0
+    data = json.loads(r.text)
+
     prec_sum = 0
     threshold = False
+    prec_sum = (
+        data["properties"]["timeseries"][0]["data"]["next_6_hours"]["details"][
+            "precipitation_amount"
+        ]
+        + data["properties"]["timeseries"][9]["data"]["next_6_hours"]["details"][
+            "precipitation_amount"
+        ]
+    )
+    if prec_sum > CONST.PREC_THRESHOLD:
+        threshold = True
 
-    for entry in data["product"]["time"]:
-        time_diff = int(parse_datetime(
-            entry["@to"]) - parse_datetime(entry["@from"]))
-        if time_diff == 3600:  # Filter for hourly forecast values
-            prec = float(entry['location']['precipitation']['@value'])
-            if prec > CONST.PREC_THRESHOLD:
-                threshold = True
-            prec_sum += prec
-
-        c += 1
-        if c >= 80:
-            break
     logger.debug("Precipitation sum: {}".format(prec_sum))
     if threshold or prec_sum > CONST.PREC_SUM_THRESHOLD:
         return True
     else:
         return False
+
 
 print(get_weather())
