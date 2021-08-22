@@ -4,8 +4,8 @@ from requests import get
 
 logger = utils.create_logger(__name__)
 
-feuchtigkeit = "http://192.168.178.57:8123/api/states/sensor.0x00158d000418a7e9_humidity"
-temperatur = "http://192.168.178.57:8123/api/states/sensor.0x00158d000418a7e9_temperature"
+feuchtigkeit = "http://192.168.178.53:8123/api/states/sensor.0x00158d000418a7e9_humidity"
+temperatur = "http://192.168.178.53:8123/api/states/sensor.0x00158d000418a7e9_temperature"
 
 headers = {
     "Authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiI0N2Y0ODVmM2MwYzY0ZmYyYjdiMDAwOWQ5NGNkNjY1YiIsImlhdCI6MTYxMTM2MjEyNywiZXhwIjoxOTI2NzIyMTI3fQ.s8UPUUcfb52e3JpL5difZDWlmOobVQRNk3vEtXkcH6s",
