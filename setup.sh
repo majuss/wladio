@@ -17,6 +17,11 @@ sudo apt install -y lirc python-pylirc liblirc-dev
 # dtoverlay=lirc-rpi,gpio_in_pin=17,gpio_out_pin=23
 
 
+# enable feature when installing pillow
+(venv) pip3.9 install --upgrade Pillow --global-option="build_ext" --global-option="--enable-[feature]"
+
+
+
 # Python venv
 python3 -m venv venv
 source venv/bin/activate
@@ -29,6 +34,7 @@ git clone https://github.com/tompreston/python-lirc.git
 find python-lirc -name '*.pyx' -exec cython {} \;
 pip3 install python-lirc/
 rm -rf python-lirc
+
 
 
 ## Bluetooth
