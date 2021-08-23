@@ -107,3 +107,16 @@ rm -rf python-lirc
 
 # [Install]
 # WantedBy=default.target
+
+
+
+
+
+
+# pi update
+## ic2
+check i2c devices with i2cdetect -l / i2cdetect -y busnum eg
+
+    i2cdetect -l
+    
+    i2cdetect -y 1
