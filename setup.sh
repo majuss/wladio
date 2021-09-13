@@ -2,7 +2,7 @@ sudo usermod -a -G i2c,spi,gpio pi
 
 # Linux packages
 sudo apt install -y libmpv1
-sudo apt install -y python3-venv libdbus-1-dev libudev-dev libical-dev libreadline-dev bluez-tools
+sudo apt install -y python3-venv libdbus-1-dev libudev-dev libical-dev libreadline-dev bluez-tools libglib2.0-dev libgirepository1.0-dev libcairo2-dev
 
 # For luma.oled
 sudo apt install -y python-dev python3-dev python-pip libfreetype6-dev libjpeg-dev build-essential libopenjp2-7 libtiff5
@@ -29,6 +29,10 @@ ExecStart=-/sbin/agetty --autologin pi --noclear %I 38400 linux
 
 # keep app running (may not work becuase of xdg_ and dbus session bus address env variables 
 sudo loginctl enable-linger pi
+=======
+# enable feature when installing pillow
+(venv) pip3.9 install --upgrade Pillow --global-option="build_ext" --global-option="--enable-[feature]"
+
 
 
 # Python venv
@@ -43,6 +47,7 @@ git clone https://github.com/tompreston/python-lirc.git
 find python-lirc -name '*.pyx' -exec cython {} \;
 pip3 install python-lirc/
 rm -rf python-lirc
+
 
 
 ## Bluetooth
@@ -115,3 +120,16 @@ rm -rf python-lirc
 
 # [Install]
 # WantedBy=default.target
+
+
+
+
+
+
+# pi update
+## ic2
+check i2c devices with i2cdetect -l / i2cdetect -y busnum eg
+
+    i2cdetect -l
+    
+    i2cdetect -y 1
