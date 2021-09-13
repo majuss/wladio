@@ -4,11 +4,11 @@ from requests import get
 
 logger = utils.create_logger(__name__)
 
-feuchtigkeit = "http://192.168.178.57:8123/api/states/sensor.0x00158d000418a7e9_humidity"
-temperatur = "http://192.168.178.57:8123/api/states/sensor.0x00158d000418a7e9_temperature"
+feuchtigkeit = "http://127.0.0.1:8123/api/states/sensor.0x00158d000418a7e9_humidity"
+temperatur = "http://127.0.0.1:8123/api/states/sensor.0x00158d000418a7e9_temperature"
 
 headers = {
-    "Authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiI0N2Y0ODVmM2MwYzY0ZmYyYjdiMDAwOWQ5NGNkNjY1YiIsImlhdCI6MTYxMTM2MjEyNywiZXhwIjoxOTI2NzIyMTI3fQ.s8UPUUcfb52e3JpL5difZDWlmOobVQRNk3vEtXkcH6s",
+    "Authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJjNWVlZDE3YTRiOTI0OTAwOGFiOTA2YzRjODMzMzFkMSIsImlhdCI6MTYyOTY3MjcwNiwiZXhwIjoxOTQ1MDMyNzA2fQ.uL83oxghly5BlutNZKSdgxzbMAlwpEUfagQ-MYxc3YM",
     "content-type": "application/json"
 }
 
@@ -66,11 +66,18 @@ bme280 = init_sensors()
 
 
 def get_data():  # 280 inside 680 outside
-    response_feuchtigkeit = get(feuchtigkeit, headers=headers)
-    data_feuchtigkeit = json.loads(response_feuchtigkeit.text)['state']
+    data_feuchtigkeit = -99
+    data_temperatur = -99
 
-    response_temperatur = get(temperatur, headers=headers)
-    data_temperatur = json.loads(response_temperatur.text)['state']
+    try:
+        response_feuchtigkeit = get(feuchtigkeit, headers=headers)
+        data_feuchtigkeit = json.loads(response_feuchtigkeit.text)['state']
+
+        response_temperatur = get(temperatur, headers=headers)
+        data_temperatur = json.loads(response_temperatur.text)['state']
+    except Exception as e:
+        print('wireless temp sensor requests failed')
+        print(e)
 
     # could be 'unavailable'
     try:
