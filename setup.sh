@@ -17,6 +17,20 @@ sudo apt install -y lirc python-pylirc liblirc-dev
 # dtoverlay=lirc-rpi,gpio_in_pin=17,gpio_out_pin=23
 
 
+
+# autologin pi
+https://maker-tutorials.com/raspberry-pi-benutzer-automatisch-anmelden-booten/
+cat /etc/systemd/system/getty@tty1.service.d/autologin.conf
+[Service]
+ExecStart=
+ExecStart=-/sbin/agetty --autologin pi --noclear %I 38400 linux
+
+
+
+# keep app running (may not work becuase of xdg_ and dbus session bus address env variables 
+sudo loginctl enable-linger pi
+
+
 # Python venv
 python3 -m venv venv
 source venv/bin/activate
