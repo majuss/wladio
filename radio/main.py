@@ -83,7 +83,7 @@ tag_thread.start()
 
 
 weather.start_thread()
-bluetooth.start_thread()
+# bluetooth.start_thread()
 power.start_thread()
 
 
@@ -91,7 +91,7 @@ def _set_initial_state_and_setup():
     display.initalize()
 
     if STATE['power_state'] is PowerState.Powered:  # power state on
-        infrared.start_thread()
+        # infrared.start_thread()
         rfid.start_thread()
         radio.leave_standby()
         speakers.on()

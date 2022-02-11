@@ -9,7 +9,7 @@ import constants as CONST
 # thread
 infrared_thread = None
 
-dev = InputDevice("/dev/input/event1")
+dev = InputDevice("/dev/input/event0")
 dev.grab()
 
 def _infrared_loop():

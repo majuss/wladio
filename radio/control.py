@@ -179,7 +179,7 @@ def control_drivewaygate():
 
     display.forced_text('Einfahrt auf/zu', CONST.DOORS_TIMEOUT)
     GPIO.output(CONST.DRIVEWAY_RELAY, GPIO.LOW)
-    sleep(1)
+    sleep(0.5)
     GPIO.output(CONST.DRIVEWAY_RELAY, GPIO.HIGH)
 
     if STATE['power_state'] is PowerState.Standby:
@@ -199,7 +199,7 @@ def control_garagedoor():
 
     display.forced_text('Garagentor auf/zu', CONST.DOORS_TIMEOUT)
     GPIO.output(CONST.GARAGE_RELAY, GPIO.LOW)
-    sleep(1)
+    sleep(0.5)
     GPIO.output(CONST.GARAGE_RELAY, GPIO.HIGH)
 
     if STATE['power_state'] is PowerState.Standby:

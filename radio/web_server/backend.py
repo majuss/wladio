@@ -1,4 +1,4 @@
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import threading
 import socketserver
 import os
@@ -63,7 +63,7 @@ class S(BaseHTTPRequestHandler):
             control.control_skip_backward()
 
 
-def run(server_class=HTTPServer, handler_class=S, port=50777):
+def run(server_class=ThreadingHTTPServer, handler_class=S, port=50777):
     try:
         with socketserver.TCPServer(("", port), S) as httpd:
             print("serving at port", port)
