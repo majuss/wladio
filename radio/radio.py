@@ -39,7 +39,7 @@ def mpv_debug_logger(level, prefix, text):
 
 
 radioPlayer = mpv.MPV(
-    audio_device='alsa/sysdefault:CARD=Device', #  'alsa/default:CARD=Device',
+    # audio_device='alsa/sysdefault:CARD=Device', #  'alsa/default:CARD=Device',
     demuxer_max_back_bytes=100 * 1000 * 1000,
     demuxer_max_bytes=10*1000*1000,
     demuxer_donate_buffer='no',
