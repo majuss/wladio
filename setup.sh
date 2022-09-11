@@ -91,6 +91,12 @@ rm -rf python-lirc
 # set pinmode to BCM and change the PINs to BCM not Board Pins
 # set RST, IRQ an CE Pins to match documentation (16, 26, 1)
 
+# at line 40 and 41, all settings depend on wiering wiring
+#def __init__(self, bus=0, device=1, speed=1000000, pin_rst=16,
+#    pin_ce=1, pin_irq=26, pin_mode=GPIO.BCM):
+
+
+
 # IN mpv.py change line ~50 `backend = CDLL(sofile)` to `backend = CDLL('/usr/local/lib/libmpv.so')`
 
 # setup to autologin user in console mode

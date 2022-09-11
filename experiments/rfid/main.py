@@ -1,10 +1,16 @@
+from sys import path
+print(path)
+
+
 from pirc522 import RFID
 rdr = RFID()
+
 import time
 
 while True:
-    time.sleep(10)
-    rdr.wait_for_tag()
+    time.sleep(3)
+    print('wait for tag')
+    rdr.wait_for_tag(4)
     (error, tag_type) = rdr.request()
 
     if not error:
@@ -24,6 +30,7 @@ while True:
     #       rdr.stop_crypto()
     else:
         print('error .request()')
+        print(error)
 
   
 
