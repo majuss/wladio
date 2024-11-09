@@ -12,7 +12,7 @@ from luma.core.virtual import viewport, snapshot, hotspot
 from luma.oled.device import ssd1322
 
 import constants as CONST
-import sensors as sensors
+import sensors_dummy as sensors
 import utils as utils
 from enums import DrawType, PowerState
 
@@ -48,7 +48,7 @@ def make_text_dict(text, next=0, font_size=28, main_text=True):
     logger.debug('make_text_dict {} {} {} {}'.format(
         text, next, font_size, main_text))
 
-    (width, height) = font_28.getsize(text)
+    (foo, bar, width, height) = font_28.getbbox(text)
 
     y = math.ceil((64 - height) / 2 + 1)
 
@@ -119,7 +119,7 @@ def standby_snap(draw, width, height):
 top_viewport = None
 main_viewport = None
 
-standby_viewport = None
+standby_viewport = {}
 
 update_text_line = True
 current_rendered_main = make_text_dict('M & M Radio')
@@ -372,8 +372,14 @@ def _setup_state_standby():
 def _remove_standby_viewport():
     global standby_viewport
 
-    virtual.remove_hotspot(standby_viewport, (0, 0))
-    standby_viewport = None
+    # virtual.remove_hotspot(standby_viewport, (0, 0))
+    # standby_viewport = None
+    if standby_viewport is not None:
+        try:
+            virtual.remove_hotspot(standby_viewport, (0, 0))
+        except ValueError:
+            print(f"Hotspot {(standby_viewport, (0, 0))} not found in virtual._hotspots")
+        standby_viewport = None
 
 
 def initalize():  # 1 PowerState.Powered / 0 PowerState.Standby

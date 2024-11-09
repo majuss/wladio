@@ -3,6 +3,7 @@ import signal
 import mpv
 import time
 import tracemalloc
+import logging
 
 import utils as utils
 import constants as CONST
@@ -10,8 +11,10 @@ import constants as CONST
 # from enums import *
 from enums import PlaybackMode
 
-
-logger = utils.create_logger(__name__)
+logger = logging.getLogger(__name__)
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", datefmt="%Y-%b-%d %H:%M:%S", level=logging.INFO
+)
 STATE = utils.state()
 
 
@@ -43,7 +46,8 @@ radioPlayer = mpv.MPV(
     demuxer_max_back_bytes=100 * 1000 * 1000,
     demuxer_max_bytes=10*1000*1000,
     demuxer_donate_buffer='no',
-    loop_file='inf')
+    loop_file='inf',
+    ao='alsa')
 #    log_handler=mpv_debug_logger)
 # radioPlayer.set_loglevel('trace')
 
@@ -225,7 +229,7 @@ def real_prev():
         playlist_position = STATE['radio_playlist_position']
         playlist_position -= 1
 
-        if playlist_position is -1:
+        if playlist_position == -1:
             playlist_position = len(player.playlist) - 1
 
         player.playlist_pos = playlist_position
@@ -475,6 +479,8 @@ def _volume_change(amount):
     if STATE['playback_mode'] is PlaybackMode.Radio:
         STATE['radio_volume'] = new_vol
 
+    utils.save_radio_conf()
+
 
 def _check_radio_pause():
     if STATE['playback_mode'] is not PlaybackMode.Radio:
@@ -489,3 +495,6 @@ def _check_radio_pause():
         if CONST.RADIO_MAX_PAUSE_DIFF < diff:  # reset radio playback to live
             radioPlayer.playlist_pos = STATE['radio_playlist_position']
             # print(diff)
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)

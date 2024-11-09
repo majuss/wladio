@@ -1,19 +1,25 @@
 import threading
 from ina219 import INA219
 from time import sleep
+import logging
 
 import utils
-import infrared
+# import infrared
 import rfid
 import control
 from enums import PowerState
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", datefmt="%Y-%b-%d %H:%M:%S", level=logging.INFO
+)
 
 power_thread = None
 STATE = utils.state()
 # logger = utils.create_logger(__name__)
 SHUNT_OHMS = 0.1
 
-ina = INA219(SHUNT_OHMS)
+ina = INA219(SHUNT_OHMS, busnum=1)
 ina.configure()
 
 
@@ -29,19 +35,18 @@ def _power_loop():
     t = threading.current_thread()
     while t.name == 'run':
         voltage = ina.voltage()
-
-        if voltage > 6 and STATE['power_state'] is not PowerState.Powered:  # leaf standby
+        if voltage > 0.4 and STATE['power_state'] is not PowerState.Powered:  # leaf standby
             STATE['power_state'] = PowerState.Powered
 
-            rfid.start_thread()
-            infrared.start_thread()
+            # rfid.start_thread()
+            # infrared.start_thread()
             control.control_leave_standby()
 
         if voltage < 6 and STATE['power_state'] is not PowerState.Standby:  # enter standby
             STATE['power_state'] = PowerState.Standby
 
             control.control_enter_standby()
-            infrared.stop_thread()
+            # infrared.stop_thread()
             rfid.stop_thread()
         sleep(0.5)
 
@@ -55,7 +60,6 @@ def start_thread():
     power_thread = threading.Thread(target=_power_loop)
     power_thread.name = 'run'
     power_thread.start()
-
 
 def stop_thread():
     global power_thread
@@ -91,3 +95,6 @@ def stop_thread():
 #     else:  # standby is ON GPIO is LOW
 #         # enter standby
 #         # GPIO.output(17, GPIO.LOW)
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)

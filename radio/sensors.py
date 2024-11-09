@@ -91,5 +91,4 @@ def get_data():  # 280 inside 680 outside
     except Exception as e:
         logger.debug('humidity sensor, got: {}'.format(data_feuchtigkeit))
         data_feuchtigkeit = -1
-
     return bme280.temperature, data_temperatur, bme280.humidity, data_feuchtigkeit

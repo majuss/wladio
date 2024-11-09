@@ -1,7 +1,18 @@
 sudo usermod -a -G i2c,spi,gpio pi
 
 # Linux packages
-sudo apt install -y libmpv1
+sudo apt install -y libmpv2 build-essential libpython3-dev libdbus-1-dev libglib2.0-dev libcairo2-dev libxt-dev libgirepository1.0-dev
+#install uv
+#uv venv venv
+# source venv/bin/activate
+export LDFLAGS="-lm"
+uv pip install python3-mpv gpiozero pillow luma.oled requests adafruit-blinka adafruit-circuitpython-bme280 rpi-lgpio pi-ina219 pi-rc522 pycairo PyGObject
+
+
+
+
+
+
 sudo apt install -y python3-venv libdbus-1-dev libudev-dev libical-dev libreadline-dev bluez-tools libglib2.0-dev libgirepository1.0-dev libcairo2-dev
 
 # For luma.oled
@@ -15,7 +26,6 @@ sudo apt install -y lirc python-pylirc liblirc-dev
 
 # sudo nano /boot/config.txt
 # dtoverlay=lirc-rpi,gpio_in_pin=17,gpio_out_pin=23
-
 
 
 # autologin pi

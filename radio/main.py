@@ -9,12 +9,13 @@ import display as display
 from enums import PlaybackMode, PowerState
 import control
 import weather as weather
-import infrared as infrared
+# import infrared as infrared
 import rfid as rfid
 import bluetooth as bluetooth
 import radio as radio
 import power as power
 import speakers as speakers
+import amp as amp
 import web_server.backend
 
 # import tracemalloc
@@ -91,9 +92,11 @@ def _set_initial_state_and_setup():
     display.initalize()
 
     if STATE['power_state'] is PowerState.Powered:  # power state on
-        infrared.start_thread()
-        rfid.start_thread()
+        # infrared.start_thread()
+        # rfid.start_thread()
         radio.leave_standby()
+        amp.on()
+        sleep(2)
         speakers.on()
 
 
